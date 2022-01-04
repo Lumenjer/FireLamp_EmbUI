@@ -141,6 +141,7 @@ struct {
     bool isStream:1;
     bool isDirect:1;
     bool isMapping:1;
+    bool isSubDraw:1;
 };
 uint64_t lampflags; // набор битов для конфига
 _LAMPFLAGS(){
@@ -175,6 +176,7 @@ _LAMPFLAGS(){
     isStream = false;
     isDirect = false;
     isMapping = true;
+    isSubDraw = false;
 }
 } LAMPFLAGS;
 //#pragma pack(pop)
@@ -397,9 +399,20 @@ public:
         }
     }
     void writeDrawBuf(CRGB &color, uint16_t x, uint16_t y) { if(!drawbuff.empty()) { drawbuff[getPixelNumber(x,y)]=color; } }
+    void writeDrawBuf(CRGB &&color, uint16_t x, uint16_t y) { return writeDrawBuf(color, x, y);}
     void writeDrawBuf(CRGB &color, uint16_t num) { if(!drawbuff.empty()) { drawbuff[num]=color; } }
     void fillDrawBuf(CRGB &color) { for(uint16_t i=0; i<drawbuff.size(); i++) drawbuff[i]=color; }
     void clearDrawBuf() { for(uint16_t i=0; i<drawbuff.size(); i++) drawbuff[i]=CRGB::Black; }
+    CRGB getDrawBufLed(uint16_t num) {
+        if (!drawbuff.empty()) {
+            num = num < 0 ? 0 : (num > NUM_LEDS ? NUM_LEDS : num);
+            return drawbuff[num];
+        }
+        else 
+            return CRGB::Black;
+    }
+    bool isSubDraw() { return flags.isSubDraw;}
+    void setSubDraw(bool flag) { flags.isSubDraw = flag;}
 #ifdef USE_STREAMING
     bool isStreamOn() {return flags.isStream;}
     bool isDirect() {return flags.isDirect;}

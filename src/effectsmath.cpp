@@ -360,7 +360,7 @@ void EffectMath::wu_pixel(uint32_t x, uint32_t y, CRGB col) {      //awesome wu_
   #undef WU_WEIGHT
 }
 
-void EffectMath::drawPixelXYF(float x, float y, const CRGB &color, uint8_t darklevel)
+void EffectMath::drawPixelXYF(float x, float y, const CRGB &color, uint8_t darklevel, bool drawing)
 {
   //if (x<-1.0 || y<-1.0 || x>((float)WIDTH) || y>((float)HEIGHT)) return;
 
@@ -375,12 +375,18 @@ void EffectMath::drawPixelXYF(float x, float y, const CRGB &color, uint8_t darkl
     int16_t xn = x + (i & 1), yn = y + ((i >> 1) & 1);
     // тут нам, ИМХО, незачем гонять через прокладки, и потом сдвигать регистры. А в случае сегмента подразумевается, 
     // что все ЛЕД в одном сегменте одинакового цвета, и достаточно получить цвет любого из них.
-    CRGB clr = getLed(getPixelNumber(xn, yn)); //EffectMath::getPixColorXY(xn, yn);
+    CRGB clr = drawing ? myLamp.getDrawBufLed(getPixelNumber(xn, yn)) : getLed(getPixelNumber(xn, yn)); //EffectMath::getPixColorXY(xn, yn);
     clr.r = qadd8(clr.r, (color.r * wu[i]) >> 8);
     clr.g = qadd8(clr.g, (color.g * wu[i]) >> 8);
     clr.b = qadd8(clr.b, (color.b * wu[i]) >> 8);
-    if (darklevel > 0) EffectMath::drawPixelXY(xn, yn, EffectMath::makeDarker(clr, darklevel));
-    else EffectMath::drawPixelXY(xn, yn, clr);
+    if (drawing) {
+      if (darklevel > 0) myLamp.writeDrawBuf(EffectMath::makeDarker(clr, darklevel), xn, yn);
+      else myLamp.writeDrawBuf(clr, xn, yn);
+    }
+    else {
+      if (darklevel > 0) EffectMath::drawPixelXY(xn, yn, EffectMath::makeDarker(clr, darklevel));
+      else EffectMath::drawPixelXY(xn, yn, clr);
+    }
   }
   #undef WU_WEIGHT
 }

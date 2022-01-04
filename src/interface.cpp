@@ -1432,14 +1432,16 @@ void block_drawing(Interface *interf, JsonObject *data){
 
     DynamicJsonDocument doc(512);
     JsonObject param = doc.to<JsonObject>();
-
-    param[FPSTR(TCONST_00CD)] = WIDTH;
-    param[FPSTR(TCONST_00CC)] = HEIGHT;
+    bool sub = myLamp.isSubDraw();
+    param[FPSTR(TCONST_00CD)] = sub ? WIDTH*4 : WIDTH;
+    param[FPSTR(TCONST_00CC)] = sub ? HEIGHT*4 : HEIGHT;
     param[FPSTR(TCONST_00CB)] = FPSTR(TINTF_0CF);
     param[FPSTR(TCONST_00DC)] = FPSTR(TINTF_0D9);
 
-
-    interf->checkbox(FPSTR(TCONST_00C4), myLamp.isDrawOn()? "1" : "0", FPSTR(TINTF_0CE), true);
+    interf->json_section_line();
+        interf->checkbox(FPSTR(TCONST_00C4), myLamp.isDrawOn()? "1" : "0", FPSTR(TINTF_0CE), true);
+        interf->checkbox(FPSTR(TCONST_0048), myLamp.isSubDraw()? "1" : "0", FPSTR(TINTF_0EC), true);
+    interf->json_section_end();
     interf->custom(String(FPSTR(TCONST_00C9)),String(FPSTR(TCONST_00C8)),embui.param(FPSTR(TCONST_0036)),String(FPSTR(TINTF_0D0)), param);
     param.clear();
 
@@ -2522,6 +2524,14 @@ void set_drawflag(Interface *interf, JsonObject *data){
     save_lamp_flags();
 }
 
+void section_drawing_frame(Interface *interf, JsonObject *data);
+void set_sub_draw(Interface *interf, JsonObject *data){
+    if (!data) return;
+    myLamp.setSubDraw((*data)[FPSTR(TCONST_0048)] == "1");
+    save_lamp_flags();
+    section_drawing_frame(interf, data);
+}
+
 #ifdef MP3PLAYER
 void set_mp3flag(Interface *interf, JsonObject *data){
     if (!data) return;
@@ -3076,6 +3086,7 @@ void create_parameters(){
     embui.section_handle_add(FPSTR(TCONST_00CA), set_drawing);
     embui.section_handle_add(FPSTR(TCONST_00DC), set_clear);
     embui.section_handle_add(FPSTR(TCONST_00C4), set_drawflag);
+    embui.section_handle_add(FPSTR(TCONST_0048), set_sub_draw);
 
     // меняю обработчики для страницы настроек :)
     embui.section_handle_remove(FPSTR(T_SETTINGS));
@@ -3179,6 +3190,10 @@ void sync_parameters(){
     obj[FPSTR(TCONST_00C4)] = tmp.isDraw ? "1" : "0";
     set_drawflag(nullptr, &obj);
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>(); // https://arduinojson.org/v6/how-to/reuse-a-json-document/
+
+    obj[FPSTR(TCONST_0048)] = tmp.isSubDraw ? "1" : "0";
+    set_sub_draw(nullptr, &obj);
+    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
 
 #ifdef LAMP_DEBUG
     obj[FPSTR(TCONST_0095)] = tmp.isDebug ? "1" : "0";
@@ -3762,7 +3777,8 @@ void remote_action(RA action, ...){
             deserializeJson(doc,str);
             JsonArray arr = doc.as<JsonArray>();
             CRGB col=CRGB::White;
-            uint16_t x=WIDTH/2U, y=HEIGHT/2U;
+            float x=WIDTH/2U, y=HEIGHT/2U;
+            bool sub = myLamp.isSubDraw();
 
             for (size_t i = 0; i < arr.size(); i++) {
                 switch(i){
@@ -3774,12 +3790,17 @@ void remote_action(RA action, ...){
                         col = val;
                         break;
                     }
-                    case 1: x = arr[i]; break;
-                    case 2: y = arr[i]; break;
+                    case 1: x = (float)arr[i]/ (sub ? 4 : 1); break;
+                    case 2: y = (float)arr[i]/ (sub ? 4 : 1); break;
                     default : break;
                 }
 			}
-            myLamp.writeDrawBuf(col,x,y);
+            if (sub){
+                EffectMath::drawPixelXYF(x,y, 0, 25U, true);
+                EffectMath::drawPixelXYF(x,y, col, 25U, true);
+            }
+            else
+                myLamp.writeDrawBuf(col,x,y);
             break; 
         }
 
