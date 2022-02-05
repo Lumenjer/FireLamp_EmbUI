@@ -232,6 +232,9 @@ void block_menu(Interface *interf, JsonObject *data){
 #ifdef USE_STREAMING
     interf->option(FPSTR(TCONST_0044), FPSTR(TINTF_0E2));   //  Трансляция
 #endif
+#ifdef RGB_PLAYER
+    interf->option(F("rgb_player"), F("Анимации"));   //  Трансляция
+#endif
     interf->option(FPSTR(TCONST_005C), FPSTR(TINTF_011));   //  События
     interf->option(FPSTR(TCONST_0004), FPSTR(TINTF_002));   //  настройки
 
@@ -2734,6 +2737,57 @@ void set_streaming_universe(Interface *interf, JsonObject *data){
     }
 }
 #endif
+#ifdef RGB_PLAYER
+void block_rbp_player(Interface *interf, JsonObject *data){
+    interf->json_section_main(F("rgb_main"), F("Аимации"));
+        interf->select(F("anim"), F("Анимация"));
+            if(LittleFS.begin()){
+#ifdef ESP32
+        File anim = LittleFS.open(F("//animations"));
+        if(anim.openNextFile())
+#else
+        Dir anim = LittleFS.openDir(F("//animations"));
+        if(anim.next())
+#endif
+        {
+            // interf->select(FPSTR(TCONST_002A), cfg);
+#ifdef ESP32
+            File root = LittleFS.open(F("//animations"));
+            File file = root.openNextFile();
+#else
+            Dir dir = LittleFS.openDir(F("//animations"));
+#endif
+            String fn;
+#ifdef ESP32
+            while (file) {
+                fn=file.name();
+                if(!file.isDirectory()){
+#else
+            while (dir.next()) {
+                fn=dir.fileName();
+#endif
+                //LOG(println, fn);
+                interf->option(fn, fn);
+#ifdef ESP32
+                    file = root.openNextFile();
+                }
+            }
+#else
+            }
+#endif
+        interf->json_section_end();
+    interf->json_section_end();
+}
+void section_rbp_player_frame(Interface *interf, JsonObject *data){
+    if (!interf) return;
+    interf->json_frame_interface(FPSTR("Анимации"));
+    block_rbp_player(interf, data);
+    interf->json_frame_flush();
+}
+void set_rgb_player(Interface *interf, JsonObject *data){
+   
+}
+#endif
 // Точка входа в настройки
 void user_settings_frame(Interface *interf, JsonObject *data);
 void section_settings_frame(Interface *interf, JsonObject *data){
@@ -3106,6 +3160,12 @@ void create_parameters(){
     embui.section_handle_add(FPSTR(TCONST_004A), set_streaming_mapping);
     embui.section_handle_add(FPSTR(TCONST_0077), set_streaming_universe);
     embui.section_handle_add(FPSTR(TCONST_0012), set_streaming_bright);
+#endif
+#ifdef RGB_PLAYER
+    embui.section_handle_add(F("rgb_player"), section_rbp_player_frame);
+    embui.section_handle_add(F("set_rgb_player"), set_rgb_player);
+    // embui.section_handle_add(F("set_rgb_player"), set_rgb_player);
+
 #endif
     embui.section_handle_add(FPSTR(TCONST_009A), section_sys_settings_frame);
     embui.section_handle_add(FPSTR(TCONST_0003), section_text_frame);

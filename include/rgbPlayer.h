@@ -9,6 +9,8 @@
 #include "main.h"
 #include "lamp.h"
 
+#ifdef RGB_PLAYER
+
 #define MULTIPLIC 256
 
 class RGBPlayer {
@@ -154,4 +156,5 @@ class RGBPlayer {
 };
 
 
+#endif
 #endif
