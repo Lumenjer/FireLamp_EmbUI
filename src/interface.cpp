@@ -2638,7 +2638,7 @@ void block_streaming(Interface *interf, JsonObject *data){
             interf->option(String(E131), FPSTR(TINTF_0E4));
             interf->option(String(SOUL_MATE), FPSTR(TINTF_0E5));
         interf->json_section_end();
-        interf->range(FPSTR(TCONST_0012), (String)myLamp.getBrightness(), F("0"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
+        interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("0"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
         if (embui.param(FPSTR(TCONST_0047)).toInt() == E131){
             interf->range(FPSTR(TCONST_0077), embui.param(FPSTR(TCONST_0077)), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_0E8), true);
             interf->comment(String(F("Universes:")) + String(ceil((float)HEIGHT / (512U / (WIDTH * 3))), 0U) + String(F(";    X:")) + String(WIDTH) + String(F(";    Y:")) + String(512U / (WIDTH * 3)));
@@ -2740,8 +2740,8 @@ void set_streaming_universe(Interface *interf, JsonObject *data){
 #ifdef RGB_PLAYER
 void block_rbp_player(Interface *interf, JsonObject *data){
     interf->json_section_main(F("rgb_main"), F("Аимации"));
-        interf->select(F("anim"), F("Анимация"));
-            if(LittleFS.begin()){
+    interf->select(F("anim"), F("Анимация"));
+    if(LittleFS.begin()){
 #ifdef ESP32
         File anim = LittleFS.open(F("//animations"));
         if(anim.openNextFile())
@@ -2775,12 +2775,14 @@ void block_rbp_player(Interface *interf, JsonObject *data){
 #else
             }
 #endif
-        interf->json_section_end();
+        }
+    }
+    interf->json_section_end();
     interf->json_section_end();
 }
 void section_rbp_player_frame(Interface *interf, JsonObject *data){
     if (!interf) return;
-    interf->json_frame_interface(FPSTR("Анимации"));
+    interf->json_frame_interface(F("Анимации"));
     block_rbp_player(interf, data);
     interf->json_frame_flush();
 }
@@ -3406,13 +3408,13 @@ t->enableDelayed();
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
 
 #ifdef USE_STREAMING
-    obj[FPSTR(TCONST_0046)] = tmp.isStream ? "1" : "0";
-    set_streaming(nullptr, &obj);
-    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
+    // obj[FPSTR(TCONST_0046)] = tmp.isStream ? "1" : "0";
+    // set_streaming(nullptr, &obj);
+    // doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
 
-    obj[FPSTR(TCONST_0049)] = tmp.isDirect ? "1" : "0";
-    set_streaming_drirect(nullptr, &obj);
-    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
+    // obj[FPSTR(TCONST_0049)] = tmp.isDirect ? "1" : "0";
+    // set_streaming_drirect(nullptr, &obj);
+    // doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
 
     obj[FPSTR(TCONST_004A)] = tmp.isMapping ? "1" : "0";
     set_streaming_mapping(nullptr, &obj);
