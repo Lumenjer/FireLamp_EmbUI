@@ -53,6 +53,10 @@ JeeUI2 lib used under MIT License Copyright (c) 2019 Marsel Akhkamov
 #ifdef RTC
     #include "rtc.h"
 #endif
+#ifdef RGB_PLAYER
+    #include "rgbPlayer.h"
+    RGBPlayer animation;
+#endif
 #include LANG_FILE                  //"text_res.h"
 
 /**
@@ -233,7 +237,7 @@ void block_menu(Interface *interf, JsonObject *data){
     interf->option(FPSTR(TCONST_0044), FPSTR(TINTF_0E2));   //  Трансляция
 #endif
 #ifdef RGB_PLAYER
-    interf->option(F("rgb_player"), F("Анимации"));   //  Трансляция
+    interf->option(FPSTR(TCONST_0058), F("Анимации"));   //  Трансляция
 #endif
     interf->option(FPSTR(TCONST_005C), FPSTR(TINTF_011));   //  События
     interf->option(FPSTR(TCONST_0004), FPSTR(TINTF_002));   //  настройки
@@ -2624,6 +2628,12 @@ void section_drawing_frame(Interface *interf, JsonObject *data){
     block_drawing(interf, data);
     interf->json_frame_flush();
 }
+
+void set_other_bright(Interface *interf, JsonObject *data){
+    if (!data) return;
+    remote_action(RA_CONTROL, (String(FPSTR(TCONST_0015))+F("0")).c_str(), String((*data)[FPSTR(TCONST_0012)].as<String>()).c_str(), NULL);
+}
+
 #ifdef USE_STREAMING
 void block_streaming(Interface *interf, JsonObject *data){
     //Страница "Трансляция"
@@ -2706,10 +2716,6 @@ void set_streaming_mapping(Interface *interf, JsonObject *data){
     myLamp.setMapping((*data)[FPSTR(TCONST_004A)] == "1");
     save_lamp_flags();
 }
-void set_streaming_bright(Interface *interf, JsonObject *data){
-    if (!data) return;
-    remote_action(RA_CONTROL, (String(FPSTR(TCONST_0015))+F("0")).c_str(), String((*data)[FPSTR(TCONST_0012)].as<String>()).c_str(), NULL);
-}
 
 void set_streaming_type(Interface *interf, JsonObject *data){
     if (!data) return;
@@ -2739,8 +2745,13 @@ void set_streaming_universe(Interface *interf, JsonObject *data){
 #endif
 #ifdef RGB_PLAYER
 void block_rbp_player(Interface *interf, JsonObject *data){
-    interf->json_section_main(F("rgb_main"), F("Аимации"));
-    interf->select(F("anim"), F("Анимация"));
+    interf->json_section_main(FPSTR(TCONST_0058), F("Анимации"));
+    interf->json_section_line();
+        interf->checkbox(FPSTR(TCONST_001A), String(myLamp.isLampOn()), FPSTR(TINTF_00E), true);
+        interf->checkbox(FPSTR(TCONST_0059), myLamp.isStreamOn() ? F("1") : F("0"), FPSTR(TINTF_0E2), true);
+    interf->json_section_end();
+    interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("0"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
+    interf->select(FPSTR(TCONST_0057), F("Анимация"), true);
     if(LittleFS.begin()){
 #ifdef ESP32
         File anim = LittleFS.open(F("//animations"));
@@ -2786,7 +2797,11 @@ void section_rbp_player_frame(Interface *interf, JsonObject *data){
     block_rbp_player(interf, data);
     interf->json_frame_flush();
 }
-void set_rgb_player(Interface *interf, JsonObject *data){
+void set_animation(Interface *interf, JsonObject *data){
+    if (!data) return;
+    // animation.play332_File((*data)[FPSTR(TCONST_0057)].as<String>(), 20);
+}
+void set_animation_on(Interface *interf, JsonObject *data){
    
 }
 #endif
@@ -3154,6 +3169,7 @@ void create_parameters(){
     embui.section_handle_add(FPSTR(TCONST_000E), set_auxflag);
 #endif
     embui.section_handle_add(FPSTR(TCONST_00C8), section_drawing_frame);
+    embui.section_handle_add(FPSTR(TCONST_0012), set_other_bright);
 #ifdef USE_STREAMING    
     embui.section_handle_add(FPSTR(TCONST_0044), section_streaming_frame);
     embui.section_handle_add(FPSTR(TCONST_0046), set_streaming);
@@ -3161,12 +3177,11 @@ void create_parameters(){
     embui.section_handle_add(FPSTR(TCONST_0049), set_streaming_drirect);
     embui.section_handle_add(FPSTR(TCONST_004A), set_streaming_mapping);
     embui.section_handle_add(FPSTR(TCONST_0077), set_streaming_universe);
-    embui.section_handle_add(FPSTR(TCONST_0012), set_streaming_bright);
 #endif
 #ifdef RGB_PLAYER
-    embui.section_handle_add(F("rgb_player"), section_rbp_player_frame);
-    embui.section_handle_add(F("set_rgb_player"), set_rgb_player);
-    // embui.section_handle_add(F("set_rgb_player"), set_rgb_player);
+    embui.section_handle_add(FPSTR(TCONST_0058), section_rbp_player_frame);
+    embui.section_handle_add(FPSTR(TCONST_0057), set_animation);
+    embui.section_handle_add(FPSTR(TCONST_0059), set_animation_on);
 
 #endif
     embui.section_handle_add(FPSTR(TCONST_009A), section_sys_settings_frame);

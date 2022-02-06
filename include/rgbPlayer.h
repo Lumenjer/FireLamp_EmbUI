@@ -36,14 +36,14 @@ class RGBPlayer {
             calc();
         }
 
-        void load_FILE_332(String filename) {
+        void load_FILE_332(String &filename) {
             LOG(println, F("RGBPlayer: Start. File rgb332 mode."));
             File rgbFile = LittleFS.open(filename, "r");
-            if (rgbFile and rgbFile.isFile() and rgbFile.size() >= (3 + WIDTH*HEIGHT)) {
+            if (rgbFile && rgbFile.isFile() && rgbFile.size() >= (3 + WIDTH*HEIGHT)) {
                 rgbFile.read(&frameWidth, 1);
                 rgbFile.read(&frameHeight, 1);
                 rgbFile.read(&frames, 1);
-                LOG(printf_P, PSTR("RGBPlayer: File %s loaded. It has %d frames. Image size %dX%d.\n"), filename, frames, frameWidth, frameHeight);
+                LOG(printf_P, PSTR("RGBPlayer: File %s loaded. It has %d frames. Image size %dX%d.\n"), filename.c_str(), frames, frameWidth, frameHeight);
             
                 calc();
             } else {
