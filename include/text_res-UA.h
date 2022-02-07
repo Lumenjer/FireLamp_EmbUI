@@ -453,6 +453,7 @@ static const char TINTF_0EA[] PROGMEM = "Нічник";
 static const char TINTF_0EB[] PROGMEM = "Світильник";
 static const char TINTF_0EC[] PROGMEM = "У будь-якому випадку";
 static const char TINTF_0ED[] PROGMEM = "Промовити час";
+static const char TINTF_0EE[] PROGMEM = "Анимації";
 
 static const char NY_MDG_STRING1[] PROGMEM = "До нового року залишилось %d %s";
 static const char NY_MDG_STRING2[] PROGMEM = "З новим %d роком!";

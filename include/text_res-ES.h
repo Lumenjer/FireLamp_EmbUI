@@ -447,13 +447,14 @@ static const char TINTF_0E3[] PROGMEM = "Modo";
 static const char TINTF_0E4[] PROGMEM = "E1.31";
 static const char TINTF_0E5[] PROGMEM = "SoulMate";
 static const char TINTF_0E6[] PROGMEM = "Efecto bloque";
-static const char TINTF_0E7[] PROGMEM = "Mapang";
+static const char TINTF_0E7[] PROGMEM = "Mapeo";
 static const char TINTF_0E8[] PROGMEM = "Universo primero";
 static const char TINTF_0E9[] PROGMEM = "Cargar Config. Botons";
 static const char TINTF_0EA[] PROGMEM = "Luz de noche";
 static const char TINTF_0EB[] PROGMEM = "Lámpara brillante";
-static const char TINTF_0EC[] PROGMEM = "De todos modos";
-static const char TINTF_0ED[] PROGMEM = "Dice el tiempo";
+static const char TINTF_0EC[] PROGMEM = "En todos los estados";
+static const char TINTF_0ED[] PROGMEM = "Decir el tiempo";
+static const char TINTF_0EE[] PROGMEM = "Animaciones";
 
 static const char NY_MDG_STRING1[] PROGMEM = "Hasta que se quede el año nuevo %d %s";
 static const char NY_MDG_STRING2[] PROGMEM = "Feliz año nuevo %d!";

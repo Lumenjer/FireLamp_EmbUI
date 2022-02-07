@@ -19,37 +19,12 @@ class RGBPlayer {
         uint16_t maxSize; 
         int16_t corrX, corrY;
         uint16_t resizeX, resizeY;
-        bool firstStart = true;
         uint8_t* frameBuf = nullptr;
+        uint8_t* data = nullptr;
         uint32_t timer = millis();
         bool done = false;
-
+        bool codec332 = true;
         File rgbFile;
-
-        void load_PGM(uint8_t *data) {
-            LOG(println, F("RGBPlayer: Start. PROGMEM mode."));
-            frameWidth = pgm_read_byte(data);
-            frameHeight = pgm_read_byte(data + 1);
-            frames = pgm_read_byte(data + 2);
-            LOG(printf_P, PSTR("RGBPlayer: Image loaded. It has %d frames. Image size %dX%d.\n"), frames, frameWidth, frameHeight);
-
-            calc();
-        }
-
-        void load_FILE_332(String &filename) {
-            LOG(println, F("RGBPlayer: Start. File rgb332 mode."));
-            File rgbFile = LittleFS.open(filename, "r");
-            if (rgbFile && rgbFile.isFile() && rgbFile.size() >= (3 + WIDTH*HEIGHT)) {
-                rgbFile.read(&frameWidth, 1);
-                rgbFile.read(&frameHeight, 1);
-                rgbFile.read(&frames, 1);
-                LOG(printf_P, PSTR("RGBPlayer: File %s loaded. It has %d frames. Image size %dX%d.\n"), filename.c_str(), frames, frameWidth, frameHeight);
-            
-                calc();
-            } else {
-                LOG(println, F("File not found or wrong format!"));
-            }
-        }
 
         void calc() {
             maxSize = max(WIDTH, HEIGHT);
@@ -91,7 +66,7 @@ class RGBPlayer {
             return color;
         }
 
-        void drawFrame () {
+        void drawFrame (bool codec) {
             for (uint16_t y = 0; y < (maxSize * MULTIPLIC); y+= resizeY) {
                 for (uint16_t x = 0; x < (maxSize * MULTIPLIC); x+= resizeX) {
                     uint16_t index = ((x / MULTIPLIC * resizeX) / MULTIPLIC) + ((y/MULTIPLIC * resizeY) / MULTIPLIC) * frameWidth;
@@ -102,15 +77,34 @@ class RGBPlayer {
     
     public:
 
-        void play332_PGM(uint8_t *data, uint8_t frameDelay) {
-            // load
-            if (firstStart) {
-                load_PGM(data);
-                firstStart = false;
-            }
+        void load_PGM(uint8_t *data) {
+            LOG(println, F("RGBPlayer: Start. PROGMEM mode."));
+            frameWidth = pgm_read_byte(data);
+            frameHeight = pgm_read_byte(data + 1);
+            frames = pgm_read_byte(data + 2);
+            LOG(printf_P, PSTR("RGBPlayer: Image loaded. It has %d frames. Image size %dX%d.\n"), frames, frameWidth, frameHeight);
 
+            calc();
+        }
+
+        void load_FILE(String &filename) {
+            LOG(println, F("RGBPlayer: Start. File rgb332 mode."));
+            File rgbFile = LittleFS.open(filename, "r");
+            if (rgbFile && rgbFile.isFile() && rgbFile.size() >= (3 + WIDTH*HEIGHT)) {
+                rgbFile.read(&frameWidth, 1);
+                rgbFile.read(&frameHeight, 1);
+                rgbFile.read(&frames, 1);
+                LOG(printf_P, PSTR("RGBPlayer: File %s loaded. It has %d frames. Image size %dX%d.\n"), filename.c_str(), frames, frameWidth, frameHeight);
+            
+                calc();
+            } else {
+                LOG(println, F("File not found or wrong format!"));
+            }
+        }
+
+        void play332_PGM(uint8_t *data, uint8_t frameDelay) {
             if ((millis() - timer >= frameDelay) and done) {
-                drawFrame();
+                drawFrame(codec332);
                 done = false;
                 timer = millis();
                 frame++;
@@ -124,15 +118,9 @@ class RGBPlayer {
 
         
 
-        void play332_File(String filename, uint8_t frameDelay) {
-            // load
-            if (firstStart) {
-                load_FILE_332(filename);
-                firstStart = false;
-            }
-
+        void play332_File(uint8_t frameDelay) {
             if ((millis() - timer >= frameDelay) and done) {
-                drawFrame();
+                drawFrame(codec332);
                 FastLED.show();
                 done = false;
                 timer = millis();
@@ -145,13 +133,13 @@ class RGBPlayer {
             }
         }
 
-        ~RGBPlayer() {
+        void stopPlayer() {
             if (rgbFile and rgbFile.isFile()) {
                 rgbFile.close();
                 LOG(println, F("RGBPlayer: Stop. File closed."));
             }
             delete [] frameBuf;
-            LOG(println, F("RGBPlayer: Stop and destroyed."));
+            LOG(println, F("RGBPlayer: Framebuffer destoyed."));
         }
 };
 

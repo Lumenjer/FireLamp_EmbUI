@@ -237,7 +237,7 @@ void block_menu(Interface *interf, JsonObject *data){
     interf->option(FPSTR(TCONST_0044), FPSTR(TINTF_0E2));   //  Трансляция
 #endif
 #ifdef RGB_PLAYER
-    interf->option(FPSTR(TCONST_0058), F("Анимации"));   //  Трансляция
+    interf->option(FPSTR(TCONST_0058), FPSTR(TINTF_0EE));   //  Трансляция
 #endif
     interf->option(FPSTR(TCONST_005C), FPSTR(TINTF_011));   //  События
     interf->option(FPSTR(TCONST_0004), FPSTR(TINTF_002));   //  настройки
@@ -2745,13 +2745,13 @@ void set_streaming_universe(Interface *interf, JsonObject *data){
 #endif
 #ifdef RGB_PLAYER
 void block_rbp_player(Interface *interf, JsonObject *data){
-    interf->json_section_main(FPSTR(TCONST_0058), F("Анимации"));
+    interf->json_section_main(FPSTR(TCONST_0058), FPSTR(TINTF_0EE));
     interf->json_section_line();
         interf->checkbox(FPSTR(TCONST_001A), String(myLamp.isLampOn()), FPSTR(TINTF_00E), true);
         interf->checkbox(FPSTR(TCONST_0059), myLamp.isStreamOn() ? F("1") : F("0"), FPSTR(TINTF_0E2), true);
     interf->json_section_end();
     interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("0"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
-    interf->select(FPSTR(TCONST_0057), F("Анимация"), true);
+    interf->select(FPSTR(TCONST_0057), FPSTR(TINTF_0EE), true);
     if(LittleFS.begin()){
 #ifdef ESP32
         File anim = LittleFS.open(F("//animations"));
@@ -2761,7 +2761,7 @@ void block_rbp_player(Interface *interf, JsonObject *data){
         if(anim.next())
 #endif
         {
-            // interf->select(FPSTR(TCONST_002A), cfg);
+            //interf->select(FPSTR(TCONST_002A), cfg);
 #ifdef ESP32
             File root = LittleFS.open(F("//animations"));
             File file = root.openNextFile();
@@ -2791,19 +2791,23 @@ void block_rbp_player(Interface *interf, JsonObject *data){
     interf->json_section_end();
     interf->json_section_end();
 }
+
 void section_rbp_player_frame(Interface *interf, JsonObject *data){
     if (!interf) return;
-    interf->json_frame_interface(F("Анимации"));
+    interf->json_frame_interface(FPSTR(TINTF_0EE));
     block_rbp_player(interf, data);
     interf->json_frame_flush();
 }
+
 void set_animation(Interface *interf, JsonObject *data){
     if (!data) return;
-    // animation.play332_File((*data)[FPSTR(TCONST_0057)].as<String>(), 20);
+    //animation.load_FILE((*data)[FPSTR(TCONST_0057)].as<String>());
 }
+
 void set_animation_on(Interface *interf, JsonObject *data){
    
 }
+
 #endif
 // Точка входа в настройки
 void user_settings_frame(Interface *interf, JsonObject *data);
