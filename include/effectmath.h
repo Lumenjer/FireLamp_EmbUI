@@ -175,6 +175,8 @@ public:
     static CRGB &getLed(uint16_t idx);
     static void blur2d(uint8_t val);
 
+    static CRGB rgb332_To_CRGB(uint8_t value); 
+
     /** аналог ардуино функции map(), но только для float
    */
     static double fmap(const double x, const double in_min, const double in_max, const double out_min, const double out_max){

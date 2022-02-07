@@ -723,6 +723,19 @@ float EffectMath::sqrt(float x){
   return u.x;
 }
 
+CRGB rgb332_To_CRGB(uint8_t value){
+    CRGB color;
+    color.r = value & 0xe0; // mask out the 3 bits of red at the start of the byte
+    color.r |= (color.r >> 3); // extend limited 0-224 range to 0-252
+    color.r |= (color.r >> 3); // extend limited 0-252 range to 0-255
+    color.g = value & 0x1c; // mask out the 3 bits of green in the middle of the byte
+    color.g |= (color.g << 3) | (color.r >> 3); // extend limited 0-34 range to 0-255
+    color.b = value & 0x03; // mask out the 2 bits of blue at the end of the byte
+    color.b |= color.b << 2; // extend 0-3 range to 0-15
+    color.b |= color.b << 4; // extend 0-15 range to 0-255
+    return color;
+}
+
 float EffectMath::tan2pi_fast(float x) {
   float y = (1 - x*x);
   return x * (((-0.000221184 * y + 0.0024971104) * y - 0.02301937096) * y + 0.3182994604 + 1.2732402998 / y);
