@@ -176,6 +176,7 @@ public:
     static void blur2d(uint8_t val);
 
     static CRGB rgb332_To_CRGB(uint8_t value); 
+    static CRGB rgb565_To_CRGB(uint16_t value);
 
     /** аналог ардуино функции map(), но только для float
    */

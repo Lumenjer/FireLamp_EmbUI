@@ -32,7 +32,7 @@ class RGBPlayer {
             resizeY = ((float)frameHeight / maxSize) * MULTIPLIC;
             corrX = ((maxSize - WIDTH) / 2) * MULTIPLIC;
             corrY = ((maxSize - HEIGHT) / 2) * MULTIPLIC;
-            frameBuf = new uint8_t[frameWidth * frameHeight];
+            frameBuf = new uint8_t[frameWidth * frameHeight * (codec332 ? 1 : 2)];
         }
 
         void getFromPGM_332(uint8_t *data, int16_t frame) {
@@ -53,11 +53,31 @@ class RGBPlayer {
             }
         }
 
-        void drawFrame (bool codec) {
+        void getFromFile_565(uint8_t frame) {
+            uint32_t index = (frameWidth * frameHeight) * frame + 3;
+            rgbFile.seek(index, SeekSet);
+
+            for(uint16_t i = 0; i < frameWidth * frameHeight; i += 2) {
+                uint8_t data0;
+                rgbFile.read(&data0, 1);
+                frameBuf[i] = data0;
+                uint8_t data1;
+                rgbFile.read(&data1, 1);
+                frameBuf[i + 1] = data1;
+            }
+        }
+
+        void drawFrame () {
             for (uint16_t y = 0; y < (maxSize * MULTIPLIC); y+= resizeY) {
                 for (uint16_t x = 0; x < (maxSize * MULTIPLIC); x+= resizeX) {
                     uint16_t index = ((x / MULTIPLIC * resizeX) / MULTIPLIC) + ((y/MULTIPLIC * resizeY) / MULTIPLIC) * frameWidth;
-                    EffectMath::getPixel(((x - corrX) /MULTIPLIC), (HEIGHT- 1) - (y - corrY) / MULTIPLIC) = EffectMath::rgb332_To_CRGB(frameBuf[index]);
+                    if (codec332)
+                        EffectMath::getPixel(((x - corrX) /MULTIPLIC), (HEIGHT- 1) - (y - corrY) / MULTIPLIC) = EffectMath::rgb332_To_CRGB(frameBuf[index]);
+                    else {
+                        index *= 2;
+                        uint16_t result = ((uint16_t)frameBuf[index] << 8) | (uint16_t)frameBuf[index + 1];
+                        EffectMath::getPixel(((x - corrX) /MULTIPLIC), (HEIGHT- 1) - (y - corrY) / MULTIPLIC) = EffectMath::rgb565_To_CRGB(result);
+                    }
                 }
             }
         }
@@ -78,7 +98,7 @@ class RGBPlayer {
             codec332 = filename.indexOf(F("332")) > 0; 
             LOG(printf_P, PSTR("RGBPlayer: Start. File rgb%d mode."), (codec332 ? 332U: 565U));
             File rgbFile = LittleFS.open(filename, "r");
-            if (rgbFile && rgbFile.isFile() && rgbFile.size() >= (3 + WIDTH*HEIGHT)) {
+            if (rgbFile && rgbFile.isFile() && rgbFile.size() >= (3 + WIDTH * HEIGHT)) {
                 rgbFile.read(&frameWidth, 1);
                 rgbFile.read(&frameHeight, 1);
                 rgbFile.read(&frames, 1);
@@ -92,7 +112,7 @@ class RGBPlayer {
 
         void play332_PGM(uint8_t *data, uint8_t frameDelay) {
             if ((millis() - timer >= frameDelay) and done) {
-                drawFrame(codec332);
+                drawFrame();
                 done = false;
                 timer = millis();
                 frame++;
@@ -108,7 +128,7 @@ class RGBPlayer {
 
         void play_File(uint8_t frameDelay) {
             if ((millis() - timer >= frameDelay) and done) {
-                drawFrame(codec332);
+                drawFrame();
                 FastLED.show();
                 done = false;
                 timer = millis();
@@ -116,7 +136,8 @@ class RGBPlayer {
                 if (frame >= frames)
                     frame = 0;
             } else if ((millis() - timer < frameDelay) and !done) {
-                getFromFile_332(frame);
+                if (codec332) getFromFile_332(frame);
+                else getFromFile_565(frame);
                 done = true;
             }
         }
