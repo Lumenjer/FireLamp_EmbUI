@@ -72,6 +72,12 @@ JeeUI2 lib used under MIT License Copyright (c) 2019 Marsel Akhkamov
   #include "ledStream.h"
 #endif
 
+#ifdef RGB_PLAYER
+    #include "rgbPlayer.h"
+#endif
+
+
+
 // TaskScheduler
 extern Scheduler ts;
 

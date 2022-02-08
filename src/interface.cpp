@@ -53,10 +53,11 @@ JeeUI2 lib used under MIT License Copyright (c) 2019 Marsel Akhkamov
 #ifdef RTC
     #include "rtc.h"
 #endif
+
 #ifdef RGB_PLAYER
     #include "rgbPlayer.h"
-    RGBPlayer animation;
 #endif
+
 #include LANG_FILE                  //"text_res.h"
 
 /**
@@ -237,7 +238,7 @@ void block_menu(Interface *interf, JsonObject *data){
     interf->option(FPSTR(TCONST_0044), FPSTR(TINTF_0E2));   //  Трансляция
 #endif
 #ifdef RGB_PLAYER
-    interf->option(FPSTR(TCONST_0058), FPSTR(TINTF_0EE));   //  Трансляция
+    interf->option(FPSTR(TCONST_0058), FPSTR(TINTF_0EE));   //  Анимации
 #endif
     interf->option(FPSTR(TCONST_005C), FPSTR(TINTF_011));   //  События
     interf->option(FPSTR(TCONST_0004), FPSTR(TINTF_002));   //  настройки
@@ -2648,7 +2649,7 @@ void block_streaming(Interface *interf, JsonObject *data){
             interf->option(String(E131), FPSTR(TINTF_0E4));
             interf->option(String(SOUL_MATE), FPSTR(TINTF_0E5));
         interf->json_section_end();
-        interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("0"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
+        interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
         if (embui.param(FPSTR(TCONST_0047)).toInt() == E131){
             interf->range(FPSTR(TCONST_0077), embui.param(FPSTR(TCONST_0077)), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_0E8), true);
             interf->comment(String(F("Universes:")) + String(ceil((float)HEIGHT / (512U / (WIDTH * 3))), 0U) + String(F(";    X:")) + String(WIDTH) + String(F(";    Y:")) + String(512U / (WIDTH * 3)));
@@ -2748,9 +2749,9 @@ void block_rbp_player(Interface *interf, JsonObject *data){
     interf->json_section_main(FPSTR(TCONST_0058), FPSTR(TINTF_0EE));
     interf->json_section_line();
         interf->checkbox(FPSTR(TCONST_001A), String(myLamp.isLampOn()), FPSTR(TINTF_00E), true);
-        interf->checkbox(FPSTR(TCONST_0059), myLamp.isStreamOn() ? F("1") : F("0"), FPSTR(TINTF_0E2), true);
+        interf->checkbox(FPSTR(TCONST_0059), myLamp.isPlayerOn() ? F("1") : F("0"), FPSTR(TINTF_0E2), true);
     interf->json_section_end();
-    interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("0"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
+    interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
     interf->select(FPSTR(TCONST_0057), FPSTR(TINTF_0EE), true);
     if(LittleFS.begin()){
 #ifdef ESP32
@@ -2801,7 +2802,17 @@ void section_rbp_player_frame(Interface *interf, JsonObject *data){
 
 void set_animation(Interface *interf, JsonObject *data){
     if (!data) return;
-    //animation.load_FILE((*data)[FPSTR(TCONST_0057)].as<String>());
+    bool flag = (*data)[FPSTR(TCONST_0059)] == "1";
+    myLamp.setPlayer(flag);
+    LOG(printf_P, PSTR("Player set %d \n"), flag);
+    if (flag) {
+        String tmp = (*data)[FPSTR(TCONST_0057)].as<String>();
+        animations.load_FILE(tmp);
+    }
+    else {
+        animations.stopPlayer();
+    }
+    save_lamp_flags();
 }
 
 void set_animation_on(Interface *interf, JsonObject *data){

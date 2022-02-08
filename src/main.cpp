@@ -46,6 +46,10 @@ Buttons *myButtons;
 MP3PLAYERDEVICE *mp3 = nullptr;
 #endif
 
+#ifdef RGB_PLAYER
+RGBPlayer animations;
+#endif
+
 void setup() {
     //Serial.begin(115200);
     Serial.begin(460800);
@@ -185,6 +189,10 @@ void loop() {
 #ifdef USE_STREAMING
     if (ledStream)
         ledStream->handle();
+#endif
+#ifdef RGB_PLAYER
+    if (myLamp.isPlayerOn())
+        animations.play_File();
 #endif
 }
 

@@ -141,6 +141,7 @@ struct {
     bool isStream:1;
     bool isDirect:1;
     bool isMapping:1;
+    bool isPlayer:1;
 };
 uint64_t lampflags; // набор битов для конфига
 _LAMPFLAGS(){
@@ -173,8 +174,9 @@ _LAMPFLAGS(){
     isGaugeOn = true;
     isTempOn = true;
     isStream = false;
-    isDirect = false;
+    isDirect = true;
     isMapping = true;
+    isPlayer = false;
 }
 } LAMPFLAGS;
 //#pragma pack(pop)
@@ -406,6 +408,10 @@ public:
     void writeDrawBuf(CRGB &color, uint16_t num) { if(!drawbuff.empty()) { drawbuff[num]=color; } }
     void fillDrawBuf(CRGB &color) { for(uint16_t i=0; i<drawbuff.size(); i++) drawbuff[i]=color; }
     void clearDrawBuf() { for(uint16_t i=0; i<drawbuff.size(); i++) drawbuff[i]=CRGB::Black; }
+#ifdef USE_STREAMING
+    bool isPlayerOn() {return flags.isPlayer;}
+    void setPlayer(bool flag) {flags.isPlayer = flag;}
+#endif
 #ifdef USE_STREAMING
     bool isStreamOn() {return flags.isStream;}
     bool isDirect() {return flags.isDirect;}
