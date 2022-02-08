@@ -2807,7 +2807,8 @@ void set_animation(Interface *interf, JsonObject *data){
     LOG(printf_P, PSTR("Player set %d \n"), flag);
     if (flag) {
         String tmp = (*data)[FPSTR(TCONST_0057)].as<String>();
-        animations.load_FILE(tmp);
+        LOG(println, tmp);
+        //animations.load_FILE(tmp);
     }
     else {
         animations.stopPlayer();

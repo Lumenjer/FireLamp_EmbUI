@@ -33,7 +33,7 @@ class RGBPlayer {
         void drawFrame ();
     
     public:
-        RGBPlayer() {};
+        RGBPlayer() {LOG(println, F("RGBPlayer was created."));};
         void load_PGM(uint8_t *data);
         void load_FILE(String &filename);
         void play332_PGM(uint8_t *data, uint8_t frameDelay);
@@ -42,5 +42,6 @@ class RGBPlayer {
         void stopPlayer();
 };
 
+extern RGBPlayer animations;
 #endif
 #endif

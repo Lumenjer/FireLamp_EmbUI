@@ -10,6 +10,8 @@
 #include "lamp.h"
 #include "effectmath.h"
 
+//RGBPlayer animations;
+
 void RGBPlayer::calc() {
     maxSize = max(WIDTH, HEIGHT);
     resizeX = ((float)frameWidth / maxSize) * MULTIPLIC;
