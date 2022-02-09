@@ -110,6 +110,7 @@ void RGBPlayer::play332_PGM(uint8_t *data, uint8_t frameDelay) {
 }
 
 void RGBPlayer::play_File() {
+
     if ((millis() - timer >= frameDelay) and done) {
         drawFrame();
         FastLED.show();

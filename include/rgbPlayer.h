@@ -20,9 +20,9 @@ class RGBPlayer {
         uint16_t resizeX, resizeY;
         uint8_t* frameBuf = nullptr;
         uint8_t* data = nullptr;
-        uint8_t frameDelay = 20;
+        uint8_t frameDelay = 30;
         uint32_t timer = millis();
-        bool done = false;
+        bool done = true;
         bool codec332 = true;
         File rgbFile;
 
