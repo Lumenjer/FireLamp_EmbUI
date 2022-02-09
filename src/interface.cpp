@@ -2802,25 +2802,23 @@ void section_rbp_player_frame(Interface *interf, JsonObject *data){
 
 void set_animation(Interface *interf, JsonObject *data){
     if (!data) return;
-    bool flag = (*data)[FPSTR(TCONST_0059)] == "1";
-    myLamp.setPlayer(flag);
-    LOG(printf_P, PSTR("Player set %d \n"), flag);
-        // String tmp = PSTR("//animations/") + (*data)[FPSTR(TCONST_0057)].as<String>();
-        // LOG(println, tmp);
-        // animations.load_FILE(tmp);
-    if (flag) {
-        String tmp = PSTR("//animations/") + (*data)[FPSTR(TCONST_0057)].as<String>();
-        LOG(println, tmp);
-        animations.load_FILE(tmp);
-    }
-    else {
-    //    animations.stopPlayer();
-    }
-    save_lamp_flags();
+    String tmp = PSTR("//animations/") + (*data)[FPSTR(TCONST_0057)].as<String>();
+    LOG(println, tmp);
+    animations.load_FILE(tmp);
 }
 
 void set_animation_on(Interface *interf, JsonObject *data){
-   
+    bool flag = (*data)[FPSTR(TCONST_0059)] == "1";
+    if (flag) {
+        myLamp.effectsTimer(T_DISABLE);
+    }
+    else {
+        animations.stopPlayer();
+        myLamp.effectsTimer(T_ENABLE);
+    }
+    myLamp.setPlayer(flag);
+    LOG(printf_P, PSTR("Player set %d \n"), flag);
+    save_lamp_flags();
 }
 
 #endif
