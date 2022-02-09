@@ -87,7 +87,7 @@ void RGBPlayer::load_FILE(String &filename) {
         rgbFile.read(&frameWidth, 1);
         rgbFile.read(&frameHeight, 1);
         rgbFile.read(&frames, 1);
-        LOG(printf_P, PSTR("RGBPlayer: File %s loaded. It has %d frames. \n Image size %dX%d.\n"), filename.c_str(), frames, frameWidth, frameHeight);
+        LOG(printf_P, PSTR("RGBPlayer: File %s loaded. It has %d frames. \nRGBPlayer: Image size %dX%d.\n"), filename.c_str(), frames, frameWidth, frameHeight);
     
         calc();
     } else {
