@@ -18,6 +18,7 @@ void RGBPlayer::calc() {
     resizeY = ((float)frameHeight / maxSize) * MULTIPLIC;
     corrX = ((maxSize - WIDTH) / 2) * MULTIPLIC;
     corrY = ((maxSize - HEIGHT) / 2) * MULTIPLIC;
+    if (frameBuf) delete [] frameBuf;
     frameBuf = new uint8_t[frameWidth * frameHeight * (codec332 ? 1 : 2)];
 }
 
@@ -80,13 +81,13 @@ void RGBPlayer::load_PGM(uint8_t *data) {
 
 void RGBPlayer::load_FILE(String &filename) {
     codec332 = filename.indexOf(F("332")) > 0; 
-    LOG(printf_P, PSTR("RGBPlayer: Start. File rgb%d mode."), (codec332 ? 332U: 565U));
+    LOG(printf_P, PSTR("RGBPlayer: Start. File rgb%d mode.\n"), (codec332 ? 332U: 565U));
     rgbFile = LittleFS.open(filename, "r");
     if (rgbFile && rgbFile.isFile() && rgbFile.size() >= (3 + WIDTH * HEIGHT)) {
         rgbFile.read(&frameWidth, 1);
         rgbFile.read(&frameHeight, 1);
         rgbFile.read(&frames, 1);
-        LOG(printf_P, PSTR("RGBPlayer: File %s loaded. It has %d frames. Image size %dX%d.\n"), filename.c_str(), frames, frameWidth, frameHeight);
+        LOG(printf_P, PSTR("RGBPlayer: File %s loaded. It has %d frames. \n Image size %dX%d.\n"), filename.c_str(), frames, frameWidth, frameHeight);
     
         calc();
     } else {
