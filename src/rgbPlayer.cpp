@@ -137,10 +137,6 @@ void RGBPlayer::play_File(bool show) {
 }
 
 void RGBPlayer::stopPlayer() {
-    // if (rgbFile and rgbFile.isFile()) {
-    //     rgbFile.close();
-    //     LOG(println, F("RGBPlayer: Stop. File closed."));
-    // }
     delete [] frameBuf;
     frameBuf = nullptr;
     LOG(println, F("RGBPlayer: Framebuffer destoyed."));
