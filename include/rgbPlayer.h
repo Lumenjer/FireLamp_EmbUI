@@ -44,6 +44,7 @@ class RGBPlayer {
         void play332_PGM(uint8_t *data, uint8_t frameDelay);
         void play_File(bool show);
         void setFrameDelay(uint8_t value) {frameDelay = value;}
+        uint8_t getFrameDelay() {return frameDelay;}
         void startPlayer() {calc();}
         void stopPlayer();
 };

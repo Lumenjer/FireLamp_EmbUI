@@ -2752,6 +2752,7 @@ void block_rbp_player(Interface *interf, JsonObject *data){
         interf->checkbox(FPSTR(TCONST_0059), myLamp.isPlayerOn() ? F("1") : F("0"), FPSTR(TINTF_0EE), true);
     interf->json_section_end();
     interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
+    interf->range(FPSTR(TCONST_005A), (String)animations.getFrameDelay(), F("1"), F("100"), F("1"), (String)FPSTR(TINTF_087), true);
     interf->select(FPSTR(TCONST_0057), FPSTR(TINTF_0EE), true);
     if(LittleFS.begin()){
 #ifdef ESP32
@@ -2822,6 +2823,13 @@ void set_animation_on(Interface *interf, JsonObject *data){
     myLamp.setPlayer(flag);
     LOG(printf_P, PSTR("Player set %d \n"), flag);
     save_lamp_flags();
+}
+
+void set_animation_speed(Interface *interf, JsonObject *data) {
+    if (!data) return;
+    SETPARAM(FPSTR(TCONST_005A));
+    uint8_t speed = (*data)[FPSTR(TCONST_005A)].as<int>();
+    animations.setFrameDelay(100 - speed + 5);
 }
 
 #endif
@@ -3147,6 +3155,13 @@ void create_parameters(){
     embui.var_create(FPSTR(TCONST_0047), String(SOUL_MATE)); // Тип трансляции
     embui.var_create(FPSTR(TCONST_0077), F("1")); // Universe для E1.31
 #endif
+
+#ifdef RGB_PLAYER
+    embui.var_create(FPSTR(TCONST_0059), F("1")); // Выключатель плеера
+    embui.var_create(FPSTR(TCONST_005A), F("50")); // Скорость воспроизведения
+#endif
+
+
     // далее идут обработчики параметров
 
    /**
@@ -3201,8 +3216,8 @@ void create_parameters(){
 #ifdef RGB_PLAYER
     embui.section_handle_add(FPSTR(TCONST_0058), section_rbp_player_frame);
     embui.section_handle_add(FPSTR(TCONST_0057), set_animation);
-    embui.section_handle_add(FPSTR(TCONST_0059), set_animation_on);
-
+    embui.section_handle_add(FPSTR(TCONST_0059), set_animation_on); 
+    embui.section_handle_add(FPSTR(TCONST_005A), set_animation_speed);
 #endif
     embui.section_handle_add(FPSTR(TCONST_009A), section_sys_settings_frame);
     embui.section_handle_add(FPSTR(TCONST_0003), section_text_frame);
