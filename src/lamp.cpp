@@ -1338,17 +1338,17 @@ void LAMP::playerTimer(SCHEDULER action, uint32_t _begin) {
     break;
   case SCHEDULER::T_ENABLE :
     if(!playerTask){
-      playerTask = new Task(_begin?_begin:EFFECTS_RUN_TIMER, TASK_ONCE, [this](){animations.play_File(false);}, &ts, false);
+      playerTask = new Task(_begin?_begin:EFFECTS_RUN_TIMER, TASK_ONCE, [this](){animations.playFile(false);}, &ts, false);
     } else {
-      playerTask->set(_begin?_begin:EFFECTS_RUN_TIMER, TASK_ONCE, [this](){animations.play_File(false);});
+      playerTask->set(_begin?_begin:EFFECTS_RUN_TIMER, TASK_ONCE, [this](){animations.playFile(false);});
     }
     playerTask->restartDelayed();
     break;
   case SCHEDULER::T_FRAME_ENABLE :
     if(!playerTask){
-      playerTask = new Task(LED_SHOW_DELAY, TASK_ONCE, [this, _begin](){animations.play_File(true);}, &ts, false);
+      playerTask = new Task(LED_SHOW_DELAY, TASK_ONCE, [this, _begin](){animations.playFile(true);}, &ts, false);
     } else {
-      playerTask->set(LED_SHOW_DELAY, TASK_ONCE, [this, _begin](){animations.play_File(true);});
+      playerTask->set(LED_SHOW_DELAY, TASK_ONCE, [this, _begin](){animations.playFile(true);});
     }
     playerTask->restartDelayed();
     break;

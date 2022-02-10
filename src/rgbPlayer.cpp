@@ -28,13 +28,6 @@ void RGBPlayer::calc() {
 
 }
 
-void RGBPlayer::getFromPGM_332(uint8_t *data, int16_t frame) {
-    for (uint16_t i = 0; i < frameWidth * frameHeight; i++) {
-        uint32_t index = (frameWidth * frameHeight) * frame + i;
-        frameBuf[i] = pgm_read_byte_far(data + index + 3);
-    }
-}
-
 void RGBPlayer::getFromFile_332(uint8_t frame) {
     uint32_t index = (frameWidth * frameHeight) * frame + 3;
     rgbFile.seek(index, SeekSet);
@@ -47,7 +40,7 @@ void RGBPlayer::getFromFile_332(uint8_t frame) {
 }
 
 void RGBPlayer::getFromFile_565(uint8_t frame) {
-    uint32_t index = (frameWidth * frameHeight) * frame + 3;
+    uint32_t index = (frameWidth * frameHeight) * frame * 2 + 3;
     rgbFile.seek(index, SeekSet);
 
     for(uint16_t i = 0; i < frameWidth * frameHeight; i ++) {
@@ -75,17 +68,7 @@ void RGBPlayer::drawFrame () {
     }
 }
 
-void RGBPlayer::load_PGM(uint8_t *data) {
-    LOG(println, F("RGBPlayer: Start. PROGMEM mode."));
-    frameWidth = pgm_read_byte(data);
-    frameHeight = pgm_read_byte(data + 1);
-    frames = pgm_read_byte(data + 2);
-    LOG(printf_P, PSTR("RGBPlayer: Image loaded. It has %d frames. Image size %dX%d.\n"), frames, frameWidth, frameHeight);
-
-    calc();
-}
-
-void RGBPlayer::load_FILE(String &filename) {
+void RGBPlayer::loadFile(String &filename) {
     if (rgbFile and rgbFile.isFile()) {
         rgbFile.close();
         LOG(println, F("RGBPlayer: Previose file was cloced"));
@@ -105,21 +88,7 @@ void RGBPlayer::load_FILE(String &filename) {
     }
 }
 
-void RGBPlayer::play332_PGM(uint8_t *data, uint8_t frameDelay) {
-    // if ((millis() - timer >= frameDelay) and done) {
-    //     drawFrame();
-    //     done = false;
-    //     timer = millis();
-    //     frame++;
-    //     if (frame >= frames)
-    //         frame = 0;
-    // } else if ((millis() - timer < frameDelay) and !done) {
-    //     getFromPGM_332(data, frame);
-    //     done = true;
-    // }
-}
-
-void RGBPlayer::play_File(bool show) {
+void RGBPlayer::playFile(bool show) {
 
     if (show) {
     if ( !fader && !myLamp.isLampOn() && !myLamp.isAlarm() ) return;

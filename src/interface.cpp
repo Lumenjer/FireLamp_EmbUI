@@ -2805,7 +2805,7 @@ void set_animation(Interface *interf, JsonObject *data){
     if (!data) return;
     String tmp = PSTR("//animations/") + (*data)[FPSTR(TCONST_0057)].as<String>();
     LOG(println, tmp);
-    animations.load_FILE(tmp);
+    animations.loadFile(tmp);
 }
 
 void set_animation_on(Interface *interf, JsonObject *data){

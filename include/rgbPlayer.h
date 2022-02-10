@@ -19,14 +19,12 @@ class RGBPlayer {
         int16_t corrX, corrY;
         uint16_t resizeX, resizeY;
         uint8_t* frameBuf = nullptr;
-        uint8_t* data = nullptr;
         uint8_t frameDelay;
         bool codec332 = true;
         File rgbFile;
         uint8_t bufSize = 0;
 
         void calc();
-        void getFromPGM_332(uint8_t *data, int16_t frame);
         void getFromFile_332(uint8_t frame);
         void getFromFile_565(uint8_t frame);
         void drawFrame ();
@@ -34,15 +32,14 @@ class RGBPlayer {
     public:
         RGBPlayer() {};
         void begin() {
-            String tmp = PSTR("//animations/test.332");
-            load_FILE(tmp);
+            String tmp = PSTR("//animations/Candle.332");
+            loadFile(tmp);
             frameDelay = 50;
             LOG(println, F("RGBPlayer: Setup done."));
         }
-        void load_PGM(uint8_t *data);
-        void load_FILE(String &filename);
-        void play332_PGM(uint8_t *data, uint8_t frameDelay);
-        void play_File(bool show);
+
+        void loadFile(String &filename);
+        void playFile(bool show);
         void setFrameDelay(uint8_t value) {frameDelay = value;}
         uint8_t getFrameDelay() {return frameDelay;}
         void startPlayer() {calc();}
