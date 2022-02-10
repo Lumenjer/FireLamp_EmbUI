@@ -235,6 +235,9 @@ private:
 
     Task *demoTask = nullptr;    // динамический планировщик Смены эффектов в ДЕМО
     Task *effectsTask;           // динамический планировщик обработки эффектов
+#ifdef RGB_PLAYER
+    Task *playerTask;           // динамический планировщик rgb плеера
+#endif
     WarningTask *warningTask = nullptr; // динамический планировщик переключалки флага lampState.isWarning
     Task *tmqtt_pub = nullptr;   // динамический планировщик публикации через mqtt
     void brightness(const uint8_t _brt, bool natural=true);     // низкоуровневая крутилка глобальной яркостью для других методов
@@ -541,6 +544,13 @@ void setTempDisp(bool flag) {flags.isTempOn = flag;}
      */
     void effectsTimer(SCHEDULER action, uint32_t _begin = 0);
 
+#ifdef RGB_PLAYER
+    /*
+     * включает/выключает "rgbPlayer"-таймер
+     * @param SCHEDULER action - enable/disable/reset
+     */
+    void playerTimer(SCHEDULER action, uint32_t _begin = 0);
+#endif
 
     ~LAMP() {}
 private:

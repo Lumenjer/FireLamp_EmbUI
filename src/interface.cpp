@@ -2749,7 +2749,7 @@ void block_rbp_player(Interface *interf, JsonObject *data){
     interf->json_section_main(FPSTR(TCONST_0058), FPSTR(TINTF_0EE));
     interf->json_section_line();
         interf->checkbox(FPSTR(TCONST_001A), String(myLamp.isLampOn()), FPSTR(TINTF_00E), true);
-        interf->checkbox(FPSTR(TCONST_0059), myLamp.isPlayerOn() ? F("1") : F("0"), FPSTR(TINTF_0E2), true);
+        interf->checkbox(FPSTR(TCONST_0059), myLamp.isPlayerOn() ? F("1") : F("0"), FPSTR(TINTF_0EE), true);
     interf->json_section_end();
     interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
     interf->select(FPSTR(TCONST_0057), FPSTR(TINTF_0EE), true);
@@ -2811,8 +2811,11 @@ void set_animation_on(Interface *interf, JsonObject *data){
     bool flag = (*data)[FPSTR(TCONST_0059)] == "1";
     if (flag) {
         myLamp.effectsTimer(T_DISABLE);
+        animations.startPlayer();
+        myLamp.playerTimer(T_ENABLE);
     }
     else {
+        myLamp.playerTimer(T_DISABLE);
         animations.stopPlayer();
         myLamp.effectsTimer(T_ENABLE);
     }

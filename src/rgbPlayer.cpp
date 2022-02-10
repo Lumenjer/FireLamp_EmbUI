@@ -18,8 +18,14 @@ void RGBPlayer::calc() {
     resizeY = ((float)frameHeight / maxSize) * MULTIPLIC;
     corrX = ((maxSize - WIDTH) / 2) * MULTIPLIC;
     corrY = ((maxSize - HEIGHT) / 2) * MULTIPLIC;
-    if (frameBuf) delete [] frameBuf;
-    frameBuf = new uint8_t[frameWidth * frameHeight * (codec332 ? 1 : 2)];
+    uint16_t newBufSize = frameWidth * frameHeight * (codec332 ? 1 : 2);
+    if (bufSize < newBufSize) {
+        delete [] frameBuf;
+        frameBuf = new uint8_t[newBufSize];
+    }
+    bufSize = newBufSize;
+    LOG(printf_P, PSTR("RGBPlayer: Framebuffer size is %d bytes.\n"), newBufSize);
+
 }
 
 void RGBPlayer::getFromPGM_332(uint8_t *data, int16_t frame) {
@@ -44,13 +50,13 @@ void RGBPlayer::getFromFile_565(uint8_t frame) {
     uint32_t index = (frameWidth * frameHeight) * frame + 3;
     rgbFile.seek(index, SeekSet);
 
-    for(uint16_t i = 0; i < frameWidth * frameHeight; i += 2) {
+    for(uint16_t i = 0; i < frameWidth * frameHeight; i ++) {
         uint8_t data0;
         rgbFile.read(&data0, 1);
-        frameBuf[i] = data0;
+        frameBuf[i*2] = data0;
         uint8_t data1;
         rgbFile.read(&data1, 1);
-        frameBuf[i + 1] = data1;
+        frameBuf[i*2 + 1] = data1;
     }
 }
 
@@ -58,7 +64,7 @@ void RGBPlayer::drawFrame () {
     for (uint16_t y = 0; y < (maxSize * MULTIPLIC); y+= resizeY) {
         for (uint16_t x = 0; x < (maxSize * MULTIPLIC); x+= resizeX) {
             uint16_t index = ((x / MULTIPLIC * resizeX) / MULTIPLIC) + ((y/MULTIPLIC * resizeY) / MULTIPLIC) * frameWidth;
-            if (codec332)
+            if (codec332) 
                 EffectMath::getPixel(((x - corrX) /MULTIPLIC), (HEIGHT- 1) - (y - corrY) / MULTIPLIC) = EffectMath::rgb332_To_CRGB(frameBuf[index]);
             else {
                 index *= 2;
@@ -80,6 +86,10 @@ void RGBPlayer::load_PGM(uint8_t *data) {
 }
 
 void RGBPlayer::load_FILE(String &filename) {
+    if (rgbFile and rgbFile.isFile()) {
+        rgbFile.close();
+        LOG(println, F("RGBPlayer: Previose file was cloced"));
+    }
     codec332 = filename.indexOf(F("332")) > 0; 
     LOG(printf_P, PSTR("RGBPlayer: Start. File rgb%d mode.\n"), (codec332 ? 332U: 565U));
     rgbFile = LittleFS.open(filename, "r");
@@ -96,42 +106,43 @@ void RGBPlayer::load_FILE(String &filename) {
 }
 
 void RGBPlayer::play332_PGM(uint8_t *data, uint8_t frameDelay) {
-    if ((millis() - timer >= frameDelay) and done) {
-        drawFrame();
-        done = false;
-        timer = millis();
-        frame++;
-        if (frame >= frames)
-            frame = 0;
-    } else if ((millis() - timer < frameDelay) and !done) {
-        getFromPGM_332(data, frame);
-        done = true;
-    }
+    // if ((millis() - timer >= frameDelay) and done) {
+    //     drawFrame();
+    //     done = false;
+    //     timer = millis();
+    //     frame++;
+    //     if (frame >= frames)
+    //         frame = 0;
+    // } else if ((millis() - timer < frameDelay) and !done) {
+    //     getFromPGM_332(data, frame);
+    //     done = true;
+    // }
 }
 
-void RGBPlayer::play_File() {
+void RGBPlayer::play_File(bool show) {
 
-    if ((millis() - timer >= frameDelay) and done) {
+    if (show) {
+    if ( !fader && !myLamp.isLampOn() && !myLamp.isAlarm() ) return;
         drawFrame();
         FastLED.show();
-        done = false;
-        timer = millis();
+        myLamp.playerTimer(T_ENABLE, frameDelay);
         frame++;
         if (frame >= frames)
             frame = 0;
-    } else if ((millis() - timer < frameDelay) and !done) {
+    } else {
         if (codec332) getFromFile_332(frame);
         else getFromFile_565(frame);
-        done = true;
+        myLamp.playerTimer(T_FRAME_ENABLE);
     }
 }
 
 void RGBPlayer::stopPlayer() {
-    if (rgbFile and rgbFile.isFile()) {
-        rgbFile.close();
-        LOG(println, F("RGBPlayer: Stop. File closed."));
-    }
+    // if (rgbFile and rgbFile.isFile()) {
+    //     rgbFile.close();
+    //     LOG(println, F("RGBPlayer: Stop. File closed."));
+    // }
     delete [] frameBuf;
+    frameBuf = nullptr;
     LOG(println, F("RGBPlayer: Framebuffer destoyed."));
 }
 

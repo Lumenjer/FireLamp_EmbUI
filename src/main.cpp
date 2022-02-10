@@ -159,6 +159,11 @@ void setup() {
   enc_setup();
 #endif
 
+#ifdef RGB_PLAYER
+
+    animations.begin();
+#endif
+
     LOG(println, F("setup() done"));
 }   // End setup()
 
@@ -190,10 +195,7 @@ void loop() {
     if (ledStream)
         ledStream->handle();
 #endif
-#ifdef RGB_PLAYER
-    if (myLamp.isPlayerOn())
-        animations.play_File();
-#endif
+
 }
 
 #ifdef EMBUI_USE_MQTT

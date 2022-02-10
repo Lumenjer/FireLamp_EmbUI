@@ -1319,6 +1319,49 @@ void LAMP::effectsTimer(SCHEDULER action, uint32_t _begin) {
   }
 }
 
+
+#ifdef RGB_PLAYER
+/*
+ * включает/выключает таймер обработки тикера rgb плеера
+ * @param SCHEDULER enable/disable/reset - вкл/выкл/сброс
+ */
+void LAMP::playerTimer(SCHEDULER action, uint32_t _begin) {
+//  LOG.printf_P(PSTR("effectsTimer: %u\n"), action);
+  switch (action)
+  {
+  case SCHEDULER::T_DISABLE :
+    if(playerTask){
+      playerTask->cancel();
+      embui.taskRecycle(playerTask);
+      playerTask = nullptr;
+    }
+    break;
+  case SCHEDULER::T_ENABLE :
+    if(!playerTask){
+      playerTask = new Task(_begin?_begin:EFFECTS_RUN_TIMER, TASK_ONCE, [this](){animations.play_File(false);}, &ts, false);
+    } else {
+      playerTask->set(_begin?_begin:EFFECTS_RUN_TIMER, TASK_ONCE, [this](){animations.play_File(false);});
+    }
+    playerTask->restartDelayed();
+    break;
+  case SCHEDULER::T_FRAME_ENABLE :
+    if(!playerTask){
+      playerTask = new Task(LED_SHOW_DELAY, TASK_ONCE, [this, _begin](){animations.play_File(true);}, &ts, false);
+    } else {
+      playerTask->set(LED_SHOW_DELAY, TASK_ONCE, [this, _begin](){animations.play_File(true);});
+    }
+    playerTask->restartDelayed();
+    break;
+  case SCHEDULER::T_RESET :
+    if (playerTask)
+      playerTask->restartDelayed();
+    break;
+  default:
+    return;
+  }
+}
+#endif
+
 //-----------------------------
 
 // ------------- мигающий цвет (не эффект! используется для отображения краткосрочного предупреждения; неблокирующий код, рисует поверх эффекта!) -------------
