@@ -2750,6 +2750,7 @@ void block_rbp_player(Interface *interf, JsonObject *data){
     interf->json_section_line();
         interf->checkbox(FPSTR(TCONST_001A), String(myLamp.isLampOn()), FPSTR(TINTF_00E), true);
         interf->checkbox(FPSTR(TCONST_0059), myLamp.isPlayerOn() ? F("1") : F("0"), FPSTR(TINTF_0EE), true);
+        interf->checkbox(FPSTR(TCONST_0078), myLamp.isPlayerBlurOn() ? F("1") : F("0"), F("Размытие"), true);
     interf->json_section_end();
     interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
     interf->range(FPSTR(TCONST_005A), (String)animations.getFrameDelay(), F("1"), F("100"), F("1"), (String)FPSTR(TINTF_087), true);
@@ -2805,10 +2806,11 @@ void set_animation(Interface *interf, JsonObject *data){
     if (!data) return;
     String tmp = PSTR("//animations/") + (*data)[FPSTR(TCONST_0057)].as<String>();
     LOG(println, tmp);
-    animations.loadFile(tmp);
+    SETPARAM(FPSTR(TCONST_0057), animations.loadFile(tmp));
 }
 
 void set_animation_on(Interface *interf, JsonObject *data){
+    if (!data) return;
     bool flag = (*data)[FPSTR(TCONST_0059)] == "1";
     if (flag) {
         myLamp.effectsTimer(T_DISABLE);
@@ -2827,9 +2829,15 @@ void set_animation_on(Interface *interf, JsonObject *data){
 
 void set_animation_speed(Interface *interf, JsonObject *data) {
     if (!data) return;
-    SETPARAM(FPSTR(TCONST_005A));
     uint8_t speed = (*data)[FPSTR(TCONST_005A)].as<int>();
-    animations.setFrameDelay(100 - speed + 5);
+    SETPARAM(FPSTR(TCONST_005A), animations.setFrameDelay(100 - speed + 5));
+}
+void set_animation_blur(Interface *interf, JsonObject *data) {
+    if (!data) return;
+    bool flag = (*data)[FPSTR(TCONST_0078)] == "1";
+    myLamp.setPlayerBlur(flag);
+    // animations.blur(flag);
+    save_lamp_flags();
 }
 
 #endif
@@ -3159,6 +3167,7 @@ void create_parameters(){
 #ifdef RGB_PLAYER
     embui.var_create(FPSTR(TCONST_0059), F("1")); // Выключатель плеера
     embui.var_create(FPSTR(TCONST_005A), F("50")); // Скорость воспроизведения
+    embui.var_create(FPSTR(TCONST_0057), F("")); // Файл анимации
 #endif
 
 
@@ -3218,6 +3227,7 @@ void create_parameters(){
     embui.section_handle_add(FPSTR(TCONST_0057), set_animation);
     embui.section_handle_add(FPSTR(TCONST_0059), set_animation_on); 
     embui.section_handle_add(FPSTR(TCONST_005A), set_animation_speed);
+    embui.section_handle_add(FPSTR(TCONST_0078), set_animation_blur);
 #endif
     embui.section_handle_add(FPSTR(TCONST_009A), section_sys_settings_frame);
     embui.section_handle_add(FPSTR(TCONST_0003), section_text_frame);
@@ -3477,6 +3487,25 @@ t->enableDelayed();
     obj[FPSTR(TCONST_0077)] = embui.param(FPSTR(TCONST_0077));
     set_streaming_universe(nullptr, &obj);
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
+#endif
+#ifdef RGB_PLAYER
+    obj[FPSTR(TCONST_0057)] = embui.param(FPSTR(TCONST_0047));
+    set_animation(nullptr, &obj);
+    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
+    
+    obj[FPSTR(TCONST_005A)] = embui.param(FPSTR(TCONST_005A));
+    set_animation_speed(nullptr, &obj);
+    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
+    
+    obj[FPSTR(TCONST_0059)] = tmp.isPlayer ? "1" : "0";
+    set_animation_on(nullptr, &obj);
+    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
+
+    obj[FPSTR(TCONST_0078)] = tmp.isPlayerBlur ? "1" : "0";
+    set_animation_blur(nullptr, &obj);
+    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
+
+
 #endif
 
 
