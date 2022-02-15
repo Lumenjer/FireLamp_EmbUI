@@ -66,9 +66,10 @@ void RGBPlayer::drawFrame () {
             }
         }
     }
+    if (blur) EffectMath::blur2d(64);
 }
 
-void RGBPlayer::loadFile(String &filename) {
+bool RGBPlayer::loadFile(String &filename) {
     if (rgbFile and rgbFile.isFile()) {
         rgbFile.close();
         LOG(println, F("RGBPlayer: Previose file was cloced"));
@@ -85,7 +86,9 @@ void RGBPlayer::loadFile(String &filename) {
         calc();
     } else {
         LOG(println, F("File not found or wrong format!"));
+        return false;
     }
+    return true;
 }
 
 void RGBPlayer::playFile(bool show) {

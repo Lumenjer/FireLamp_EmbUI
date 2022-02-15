@@ -767,6 +767,7 @@ void block_effects_param(Interface *interf, JsonObject *data){
                 break;
         }
     }
+    
 #ifdef EMBUI_USE_MQTT
     publish_ctrls_vals();
 #endif
@@ -2630,9 +2631,17 @@ void section_drawing_frame(Interface *interf, JsonObject *data){
     interf->json_frame_flush();
 }
 
+// void set_other_bright(Interface *interf, JsonObject *data){
+//     if (!data) return;
+//     uint8_t bri = (*data)[FPSTR(TCONST_0012)].as<int>();
+//     SETPARAM(FPSTR(TCONST_0012), myLamp.setOtherBrightness(bri));
+
+// }
+
 void set_other_bright(Interface *interf, JsonObject *data){
     if (!data) return;
-    remote_action(RA_CONTROL, (String(FPSTR(TCONST_0015))+F("0")).c_str(), String((*data)[FPSTR(TCONST_0012)].as<String>()).c_str(), NULL);
+    remote_action(RA::RA_BRIGHT_NF, (String(FPSTR(TCONST_0015)) + "0").c_str(), String((*data)[FPSTR(TCONST_0012)].as<String>()).c_str(), NULL);
+    //remote_action(RA_CONTROL, (String(FPSTR(TCONST_0015))+F("0")).c_str(), String((*data)[FPSTR(TCONST_0012)].as<String>()).c_str(), NULL);
 }
 
 #ifdef USE_STREAMING
@@ -2750,10 +2759,10 @@ void block_rbp_player(Interface *interf, JsonObject *data){
     interf->json_section_line();
         interf->checkbox(FPSTR(TCONST_001A), String(myLamp.isLampOn()), FPSTR(TINTF_00E), true);
         interf->checkbox(FPSTR(TCONST_0059), myLamp.isPlayerOn() ? F("1") : F("0"), FPSTR(TINTF_0EE), true);
-        interf->checkbox(FPSTR(TCONST_0078), myLamp.isPlayerBlurOn() ? F("1") : F("0"), F("Размытие"), true);
+        interf->checkbox(FPSTR(TCONST_0078), myLamp.isPlayerBlurOn() ? F("1") : F("0"), DFTINTF_0DE, true);
     interf->json_section_end();
     interf->range(FPSTR(TCONST_0012), (String)myLamp.getLampBrightness(), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_00D), true);
-    interf->range(FPSTR(TCONST_005A), (String)animations.getFrameDelay(), F("1"), F("100"), F("1"), (String)FPSTR(TINTF_087), true);
+    interf->range(FPSTR(TCONST_005A), embui.param(FPSTR(TCONST_005A)), F("1"), F("255"), F("1"), (String)FPSTR(TINTF_087), true);
     interf->select(FPSTR(TCONST_0057), FPSTR(TINTF_0EE), true);
     if(LittleFS.begin()){
 #ifdef ESP32
@@ -2807,6 +2816,7 @@ void set_animation(Interface *interf, JsonObject *data){
     String tmp = PSTR("//animations/") + (*data)[FPSTR(TCONST_0057)].as<String>();
     LOG(println, tmp);
     SETPARAM(FPSTR(TCONST_0057), animations.loadFile(tmp));
+    
 }
 
 void set_animation_on(Interface *interf, JsonObject *data){
@@ -2830,13 +2840,14 @@ void set_animation_on(Interface *interf, JsonObject *data){
 void set_animation_speed(Interface *interf, JsonObject *data) {
     if (!data) return;
     uint8_t speed = (*data)[FPSTR(TCONST_005A)].as<int>();
-    SETPARAM(FPSTR(TCONST_005A), animations.setFrameDelay(100 - speed + 5));
+    SETPARAM(FPSTR(TCONST_005A), animations.setFrameDelay(speed));
 }
+
 void set_animation_blur(Interface *interf, JsonObject *data) {
     if (!data) return;
     bool flag = (*data)[FPSTR(TCONST_0078)] == "1";
     myLamp.setPlayerBlur(flag);
-    // animations.blur(flag);
+    animations.setBlur(flag);
     save_lamp_flags();
 }
 
@@ -3163,11 +3174,12 @@ void create_parameters(){
     embui.var_create(FPSTR(TCONST_0047), String(SOUL_MATE)); // Тип трансляции
     embui.var_create(FPSTR(TCONST_0077), F("1")); // Universe для E1.31
 #endif
-
+    embui.var_create(FPSTR(TCONST_0012), F("127")); // Яркость не для эффектов, стриминг, плеер и т.п.
 #ifdef RGB_PLAYER
-    embui.var_create(FPSTR(TCONST_0059), F("1")); // Выключатель плеера
+    embui.var_create(FPSTR(TCONST_0059), F("0")); // Выключатель плеера
     embui.var_create(FPSTR(TCONST_005A), F("50")); // Скорость воспроизведения
     embui.var_create(FPSTR(TCONST_0057), F("")); // Файл анимации
+    embui.var_create(FPSTR(TCONST_0078), F("0")); // Выключатель блюра плеера
 #endif
 
 
@@ -3488,15 +3500,18 @@ t->enableDelayed();
     set_streaming_universe(nullptr, &obj);
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
 #endif
+    obj[FPSTR(TCONST_0012)] = embui.param(FPSTR(TCONST_0012));
+    set_other_bright(nullptr, &obj);
+    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
 #ifdef RGB_PLAYER
-    obj[FPSTR(TCONST_0057)] = embui.param(FPSTR(TCONST_0047));
+    obj[FPSTR(TCONST_0057)] = embui.param(FPSTR(TCONST_0057));
     set_animation(nullptr, &obj);
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
     
     obj[FPSTR(TCONST_005A)] = embui.param(FPSTR(TCONST_005A));
     set_animation_speed(nullptr, &obj);
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
-    
+       
     obj[FPSTR(TCONST_0059)] = tmp.isPlayer ? "1" : "0";
     set_animation_on(nullptr, &obj);
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
@@ -3504,7 +3519,6 @@ t->enableDelayed();
     obj[FPSTR(TCONST_0078)] = tmp.isPlayerBlur ? "1" : "0";
     set_animation_blur(nullptr, &obj);
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
-
 
 #endif
 
@@ -3807,6 +3821,7 @@ void remote_action(RA action, ...){
             obj[FPSTR(TCONST_00D5)] = true;
             set_effects_dynCtrl(nullptr, &obj);
             break;
+
 #ifdef MP3PLAYER
         case RA::RA_MP3_PREV:
             if(!myLamp.isONMP3()) return;

@@ -23,6 +23,7 @@ class RGBPlayer {
         bool codec332 = true;
         File rgbFile;
         uint8_t bufSize = 0;
+        bool blur;
 
         void calc();
         void getFromFile_332(uint8_t frame);
@@ -32,18 +33,25 @@ class RGBPlayer {
     public:
         RGBPlayer() {};
         void begin() {
-            String tmp = PSTR("//animations/Candle.332");
-            loadFile(tmp);
-            frameDelay = 50;
+            String tmp = (String)PSTR("//animations/") + embui.param(FPSTR(TCONST_0057));
+            if (!loadFile(tmp)) {
+                tmp = (String)PSTR("//animations/Candle.332");
+                loadFile(tmp);
+            }
+            frameDelay = map(embui.param(FPSTR(TCONST_005A)).toInt(), 1, 255, 75, 1);
+            //uint8_t bri = embui.param(FPSTR(TCONST_0012)).toInt();
+            //setLampBrightness(bri);
+            blur = embui.param(FPSTR(TCONST_0078)) == "1";
             LOG(println, F("RGBPlayer: Setup done."));
         }
 
-        void loadFile(String &filename);
+        bool loadFile(String &filename);
         void playFile(bool show);
-        void setFrameDelay(uint8_t value) {frameDelay = value;}
+        void setFrameDelay(uint8_t value) {frameDelay = map(embui.param(FPSTR(TCONST_005A)).toInt(), 1, 255, 75, 1);}
         uint8_t getFrameDelay() {return frameDelay;}
         void startPlayer() {calc();}
         void stopPlayer();
+        void setBlur(bool flag) {blur = flag;}
 };
 
 extern RGBPlayer animations;

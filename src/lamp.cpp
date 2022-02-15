@@ -424,7 +424,12 @@ void LAMP::changePower(bool flag) // флаг включения/выключе�
       Led_Stream::newStreamObj((STREAM_TYPE)embui.param(FPSTR(TCONST_0047)).toInt());
     if(!flags.isDirect || !flags.isStream)
 #endif
+#ifdef RGB_PLAYER
+    if (!flags.isPlayer) effectsTimer(T_ENABLE);
+    else playerTimer(T_ENABLE);
+#else
     effectsTimer(T_ENABLE);
+#endif
     if(mode == LAMPMODE::MODE_DEMO)
       demoTimer(T_ENABLE);
   } else  {

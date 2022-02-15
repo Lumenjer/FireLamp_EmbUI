@@ -339,10 +339,46 @@ public:
     }
 
     // Lamp brightness control (здесь методы работы с конфигурационной яркостью, не с LED!)
-    uint8_t getLampBrightness() { return flags.isGlobalBrightness? globalBrightness : (effects.getControls()[0]->getVal()).toInt();}
-    uint8_t getNormalizedLampBrightness() { return (uint8_t)(BRIGHTNESS * (flags.isGlobalBrightness? globalBrightness : (effects.getControls()[0]->getVal()).toInt()) / 255);}
-    void setLampBrightness(uint8_t brg) { lampState.brightness=brg; if (flags.isGlobalBrightness) setGlobalBrightness(brg); else effects.getControls()[0]->setVal(String(brg)); }
+    uint8_t getLampBrightness() { 
+        if (flags.isGlobalBrightness)
+            return globalBrightness;
+        else 
+            return (effects.getControls()[0]->getVal()).toInt();
+    }
+
+    uint8_t getOtherBrightness() { 
+        if (flags.isGlobalBrightness)
+            return globalBrightness;
+        else 
+            return embui.param(FPSTR(TCONST_0012)).toInt();
+    }
+    
+    uint8_t getNormalizedLampBrightness() { 
+        if (flags.isGlobalBrightness)
+            return (BRIGHTNESS * globalBrightness) / 255;
+        else 
+            return ((BRIGHTNESS * (effects.getControls()[0]->getVal()).toInt())) / 255;
+    }
+
+    void setLampBrightness(uint8_t brg) { 
+        lampState.brightness=brg; 
+        if (flags.isGlobalBrightness) 
+            setGlobalBrightness(brg); 
+        else 
+            effects.getControls()[0]->setVal(String(brg)); 
+    }
+
     void setGlobalBrightness(uint8_t brg) {globalBrightness = brg;}
+    void setOtherBrightness(uint8_t brg) { 
+        lampState.brightness=brg; 
+        embui.var(FPSTR(TCONST_0012), (String)brg);
+        if(isLampOn())
+            setBrightness(getNormalizedLampBrightness(), !flags.isFaderON);
+        if (IsGlobalBrightness()) {
+            embui.var(FPSTR(TCONST_0018), String(brg));
+        } 
+
+    };
     void setIsGlobalBrightness(bool val) {flags.isGlobalBrightness = val; if(effects.worker) { lampState.brightness=getLampBrightness(); effects.worker->setDynCtrl(effects.getControls()[0]);} }
     bool IsGlobalBrightness() {return flags.isGlobalBrightness;}
     bool isAlarm() {return mode == MODE_ALARMCLOCK;}
@@ -413,7 +449,7 @@ public:
     void writeDrawBuf(CRGB &color, uint16_t num) { if(!drawbuff.empty()) { drawbuff[num]=color; } }
     void fillDrawBuf(CRGB &color) { for(uint16_t i=0; i<drawbuff.size(); i++) drawbuff[i]=color; }
     void clearDrawBuf() { for(uint16_t i=0; i<drawbuff.size(); i++) drawbuff[i]=CRGB::Black; }
-#ifdef USE_STREAMING
+#ifdef RGB_PLAYER
     bool isPlayerOn() {return flags.isPlayer;}
     bool isPlayerBlurOn() {return flags.isPlayerBlur;}
     void setPlayer(bool flag) {flags.isPlayer = flag;}
