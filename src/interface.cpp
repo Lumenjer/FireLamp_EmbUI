@@ -759,11 +759,61 @@ void block_effects_param(Interface *interf, JsonObject *data){
                 break;
         }
     }
+#ifdef RGB_PLAYER
+    if (myLamp.effects.getCurrent() == 255) {
+        interf->select(FPSTR(TCONST_0057), F("Анимация"), true);
+        if(LittleFS.begin()){
+#ifdef ESP32
+            File anim = LittleFS.open(F("//animations"));
+            if(anim.openNextFile())
+#else
+            Dir anim = LittleFS.openDir(F("//animations"));
+            if(anim.next())
+#endif
+            {
+                //interf->select(FPSTR(TCONST_002A), cfg);
+#ifdef ESP32
+                File root = LittleFS.open(F("//animations"));
+                File file = root.openNextFile();
+#else
+                Dir dir = LittleFS.openDir(F("//animations"));
+#endif
+                String fn;
+#ifdef ESP32
+                while (file) {
+                    fn=file.name();
+                    if(!file.isDirectory()){
+#else
+                while (dir.next()) {
+                    fn=dir.fileName();
+#endif
+                    //LOG(println, fn);
+                    interf->option(fn, fn);
+#ifdef ESP32
+                        file = root.openNextFile();
+                    }
+                }
+#else
+                }
+#endif
+            }
+        }
+    }
+#endif
 #ifdef EMBUI_USE_MQTT
     publish_ctrls_vals();
 #endif
     if(isinterf) interf->json_section_end();
 }
+
+#ifdef RGB_PLAYER
+void set_animation(Interface *interf, JsonObject *data){
+    if (!data) return;
+    String tmp = PSTR("//animations/") + (*data)[FPSTR(TCONST_0057)].as<String>();
+    LOG(println, tmp);
+    // SETPARAM(FPSTR(TCONST_0057), animations.loadFile(tmp));
+}
+#endif
 
 void show_effects_param(Interface *interf, JsonObject *data){
     //if (!interf) return;
@@ -3110,6 +3160,9 @@ void create_parameters(){
     embui.section_handle_add(FPSTR(TCONST_0077), set_streaming_universe);
     embui.section_handle_add(FPSTR(TCONST_0012), set_streaming_bright);
 #endif
+#ifdef RGB_PLAYER
+    embui.var_create(FPSTR(TCONST_0057), F("")); // Файл анимации
+#endif
     embui.section_handle_add(FPSTR(TCONST_009A), section_sys_settings_frame);
     embui.section_handle_add(FPSTR(TCONST_0003), section_text_frame);
     embui.section_handle_add(FPSTR(TCONST_0034), set_lamp_textsend);
@@ -3364,6 +3417,11 @@ t->enableDelayed();
     doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
 #endif
 
+#ifdef RGB_PLAYER
+    obj[FPSTR(TCONST_0057)] = embui.param(FPSTR(TCONST_0047));
+    set_animation(nullptr, &obj);
+    doc.clear(); doc.garbageCollect(); obj = doc.to<JsonObject>();
+#endif
 
     obj[FPSTR(TCONST_004E)] = tmp.isFaderON ? "1" : "0";
     obj[FPSTR(TCONST_008E)] = tmp.isEffClearing ? "1" : "0";
