@@ -46,18 +46,7 @@ JeeUI2 lib used under MIT License Copyright (c) 2019 Marsel Akhkamov
 #include "ui.h"
 #include "DS18B20.h"
 #include "extra_tasks.h"
-
-uint8_t currDynCtrl;        // текущий контрол, с которым работаем
-uint8_t currAction;         // идент текущей операции: 0 - ничего, 1 - крутим яркость, 2 - меняем эффекты, 3 - меняем динамические контролы
-uint16_t currEffNum;        // текущий номер эффекта
-uint16_t anyValue;          // просто любое значение, которое крутим прямо сейчас, очищается в enc_loop
-uint8_t loops;              // счетчик псевдотаймера
-bool done;                  // true == все отложенные до enc_loop операции выполнены.
-bool inSettings;            // флаг - мы в настройках эффекта
-uint8_t speed, fade;
-
-uint8_t txtDelay = 40U;
-CRGB txtColor = CRGB::Orange;
+Encoder enc;
 
 Task encTask(1 * TASK_MILLISECOND, TASK_FOREVER, &callEncTick, &ts, true);
 
@@ -65,9 +54,9 @@ void callEncTick () {
   enc.tick();
 }
 
-void encLoop() {
+void Encoder::handle() {
   static uint16_t valRepiteChk = anyValue;
-  noInterrupt();
+  // noInterrupt();
   //enc.tick();
 
   if (inSettings) { // Время от времени выводим название контрола (в режиме "Настройки эффекта")
@@ -140,7 +129,7 @@ void encLoop() {
       currAction = 0;
     }
   }
-  interrupt();
+  // interrupt();
 }
 
 
@@ -168,8 +157,8 @@ void noInterrupt() {
 // Функция обрабатывает повороты энкодера
 void isTurn() {
   if (!myLamp.isLampOn()) return;
-  noInterrupt();
-  resetTimers();
+  // noInterrupt();
+  // resetTimers();
   uint8_t turnType = 0;
 
   // тут опрос эвентов с энкодера Right, Left, etc.
@@ -407,7 +396,7 @@ void myClicks() {
 }
 
 // Поместить в общий setup()
-void enc_setup() {
+void Encoder::init() {
   currAction = 0; // id операции, котору нужно выпонить в enc_loop
   currEffNum = 0;
   anyValue = 0; // просто любое значение, которое крутить прямо сейчас, очищается в enc_loop
@@ -606,11 +595,5 @@ void sendIP() {
   tm1637.setIpShow();
   #endif
 }
-
-
-uint8_t getEncTxtDelay(){ return txtDelay;}
-void setEncTxtDelay(const uint8_t speed){ txtDelay = speed;}
-CRGB getEncTxtColor(){ return txtColor;}
-void setEncTxtColor(const CRGB color){ txtColor = color;}
 
 #endif
