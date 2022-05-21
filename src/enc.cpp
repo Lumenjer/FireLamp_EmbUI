@@ -46,6 +46,15 @@ JeeUI2 lib used under MIT License Copyright (c) 2019 Marsel Akhkamov
 #include "ui.h"
 #include "DS18B20.h"
 #include "extra_tasks.h"
+
+#ifndef EXIT_TIMEOUT
+#define EXIT_TIMEOUT 3U
+#endif
+
+#ifndef ENC_STRING_EFFNUM_DELAY
+#define ENC_STRING_EFFNUM_DELAY 17
+#endif
+
 Encoder enc;
 
 Task encTask(1 * TASK_MILLISECOND, TASK_FOREVER, &callEncTick, &ts, true);
@@ -84,16 +93,16 @@ void Encoder::handle() {
 /*
 *     Оперативные изменения, яркость например, чтобы было видно что происходит
 */
-  if (currAction != 2) {
-    if (valRepiteChk != (currAction == 3 ? myLamp.getEffControls()[currDynCtrl]->getVal().toInt() : anyValue) && !done) {  // проверим менялось ли значение, чтобы не дергать почем зря 
-      valRepiteChk = (currAction == 3 ? myLamp.getEffControls()[currDynCtrl]->getVal().toInt() : anyValue);
+  if (currAction != SET_BRIGHT) {
+    if (valRepiteChk != (currAction == SET_CONTROL ? myLamp.getEffControls()[currDynCtrl]->getVal().toInt() : anyValue) && !done) {  // проверим менялось ли значение, чтобы не дергать почем зря 
+      valRepiteChk = (currAction == SET_CONTROL ? myLamp.getEffControls()[currDynCtrl]->getVal().toInt() : anyValue);
       switch (currAction)
       {
-      case 1: // регулировка яркости
+      case SET_BRIGHT: // регулировка яркости
         remote_action(RA::RA_BRIGHT_NF, (String(FPSTR(TCONST_0015)) + "0").c_str(), String(anyValue).c_str(), NULL);
         done = true;
         break;
-      case 3: // регулировка любого из динамических контролов в режиме "Настройки эффекта"
+      case SET_CONTROL: // регулировка любого из динамических контролов в режиме "Настройки эффекта"
         remote_action(RA::RA_CONTROL, (String(FPSTR(TCONST_0015)) + String(myLamp.getEffControls()[currDynCtrl]->getId())).c_str(), myLamp.getEffControls()[currDynCtrl]->getVal().c_str(), NULL);
         done = true;
       break;
@@ -126,7 +135,7 @@ void Encoder::handle() {
       remote_action(RA::RA_EFFECT, String(myLamp.effects.getSelected()).c_str(), NULL);
       encSendString(String(FPSTR(TINTF_00A)) + ": " + (currEffNum <= 255 ? String(currEffNum) : (String((byte)(currEffNum & 0xFF)) + "." + String((byte)(currEffNum >> 8) - 1U))), txtColor, true, txtDelay);
       done = true;
-      currAction = 0;
+      currAction = WAIT;
     }
   }
   // interrupt();
@@ -216,7 +225,7 @@ void isTurn() {
 }
 
 // Функция обрабатывает клики по кнопке
-void isClick() {
+void Encoder::isClick() {
   noInterrupt();
   resetTimers();
   if (!inSettings) encDisplay(enc.clicks, String(F("CL.")));
@@ -241,7 +250,7 @@ void isClick() {
 }
 
 // Функция проверяет может ли контрол быть использоваан (проверка на скрытость, на скрытость по микрофону и т.п.)
-bool validControl(const CONTROL_TYPE ctrlCaseType) {
+bool Encoder::validControl(const CONTROL_TYPE ctrlCaseType) {
   bool isOk = false;
 #ifdef MIC_EFFECTS
   bool isMicOn = myLamp.isMicOnOff();
@@ -278,7 +287,7 @@ bool validControl(const CONTROL_TYPE ctrlCaseType) {
 }
 
 // Функция обрабатывает состояние "кнопка нажата и удержана"
-void isHolded() {
+void Encoder::isHolded() {
   noInterrupt();
   LOG(printf_P, PSTR("Enc: Pressed and holded\n"));
   if (!myLamp.isLampOn()) {
@@ -305,13 +314,13 @@ void isHolded() {
 }
 
 // Функция выхода из режима "Настройки эффекта", восстанавливает состояния до, форсирует запись конфига эффекта
-void exitSettings() {
+void Encoder::exitSettings() {
   if (!inSettings) return;
   noInterrupt();
   currDynCtrl = 1;
   done = true;
   loops = 0;
-  currAction = 0;
+  currAction = WAIT;
   anyValue = 0;
   inSettings = false;
   encDisplay(String(F("done")));
@@ -397,7 +406,7 @@ void myClicks() {
 
 // Поместить в общий setup()
 void Encoder::init() {
-  currAction = 0; // id операции, котору нужно выпонить в enc_loop
+  currAction = WAIT; // id операции, котору нужно выпонить в enc_loop
   currEffNum = 0;
   anyValue = 0; // просто любое значение, которое крутить прямо сейчас, очищается в enc_loop
   done = true; // true == все отложенные до enc_loop операции выполнены.
@@ -406,28 +415,28 @@ void Encoder::init() {
   currDynCtrl = 1;
   interrupt(); // включаем прерывания энкодера и кнопки
   //enc.counter = 100;      // изменение счётчика
-  enc.attach(TURN_HANDLER, isTurn);
-  enc.attach(CLICK_HANDLER, isClick);
-  enc.attach(HOLDED_HANDLER, isHolded);
- // enc.attach(STEP_HANDLER, myStep);
-  enc.attach(CLICKS_HANDLER, myClicks);
+//   enc.attach(TURN_HANDLER, isTurn);
+//   enc.attach(CLICK_HANDLER, isClick);
+//   enc.attach(HOLDED_HANDLER, isHolded);
+//  // enc.attach(STEP_HANDLER, myStep);
+//   enc.attach(CLICKS_HANDLER, myClicks);
   //enc.attachClicks(6, isClick6);
 
 }
 
 // Функция регулировки яркости в обычном режиме
-void encSetBri(int val) {
+void Encoder::SetBri(int val) {
   resetTimers();
 
-  if (done or currAction !=1) { 
+  if (done || currAction != SET_BRIGHT) { 
     anyValue = myLamp.getLampBrightness();
     done = false;
   }
-  if (currAction == 2) {
-    currAction = 1; // сменим мод, но на вылет. Крутить яркостью будем в следующем цикле. Так уменьшим количество ошибок юзера, когда при отпускании энкодера он проворачивает его.
+  if (currAction == SET_EFFECT) {
+    currAction = SET_BRIGHT; // сменим мод, но на вылет. Крутить яркостью будем в следующем цикле. Так уменьшим количество ошибок юзера, когда при отпускании энкодера он проворачивает его.
     return;
   }
-  currAction = 1;
+  currAction = SET_BRIGHT;
   anyValue = constrain(anyValue + val, 1, 255);
   if (myLamp.getGaugeType()!=GAUGETYPE::GT_NONE){
       GAUGE::GaugeShow(anyValue, 255);
@@ -437,7 +446,7 @@ void encSetBri(int val) {
 }
 
 // Функция смены эффекта зажатым энкодером
-void encSetEffect(int val) {
+void Encoder::SetEffect(int val) {
   noInterrupt();
   resetTimers();
   if (inSettings) { // если в режиме "Настройки эффекта" выходим из него
@@ -445,13 +454,13 @@ void encSetEffect(int val) {
     return;
   }
 
-  if (done or currAction !=2) { // если сеттер отработал или предыдущий мод не отвечает текущему, перечитаем значение, и взведем сеттер
+  if (done or currAction != SET_EFFECT) { // если сеттер отработал или предыдущий мод не отвечает текущему, перечитаем значение, и взведем сеттер
     anyValue = myLamp.effects.effIndexByList(myLamp.effects.getCurrent());
     done = false;
     encDisplay(anyValue, "");
   }
 
-  currAction = 2;
+  currAction = SET_EFFECT;
 
   anyValue = anyValue + val;
   
@@ -476,15 +485,15 @@ void encSetEffect(int val) {
 }
 
 // Функция настройки динамического контрола в режиме "Настройки эффекта"
-void encSetDynCtrl(int val) {
+void Encoder::SetDynCtrl(int val) {
   noInterrupt();
   resetTimers();
   loops = 0;
   
-  if (done or currAction !=3) { 
+  if (done || currAction != SET_CONTROL) { 
     done = false;
   }
-  currAction = 3;
+  currAction = SET_CONTROL;
   // тут магия, некоторые чекбоксы у нас особенные, типа локальный "Микрофон". 
   // Придется проверять что это - ползунок или чекбокс и по разному подходить к процессу внесения нового значения. Бля...
   if ((myLamp.getEffControls()[currDynCtrl]->getType() & 0x0F) == 0) // если ползунок
@@ -502,7 +511,7 @@ void encSetDynCtrl(int val) {
 }
 
 
-void encDisplay(uint16_t value, String type) {
+void Encoder::Display(uint16_t value, String type) {
 #ifdef TM1637_CLOCK
   tm1637.getSetDelay() = TM_TIME_DELAY;
   tm1637.display(value, true, false, value >= 100 ? 1 : (value >= 10 ? 2 : 3) );  
@@ -510,7 +519,7 @@ void encDisplay(uint16_t value, String type) {
 #endif
 }
 
-void encDisplay(float value) {
+void Encoder::Display(float value) {
 #ifdef TM1637_CLOCK
   tm1637.getSetDelay() = TM_TIME_DELAY;
   tm1637.clearScreen();
@@ -518,7 +527,7 @@ void encDisplay(float value) {
 #endif
 }
 
-void encDisplay(String str) {
+void Encoder::Display(String str) {
 #ifdef TM1637_CLOCK
   tm1637.getSetDelay() = TM_TIME_DELAY;
   tm1637.clearScreen();
@@ -527,14 +536,14 @@ void encDisplay(String str) {
 }
 
 // Ресетим таймера автосохранения конфигов и Демо на время "баловства" с энкодером 
-void resetTimers() {
+void Encoder::resetTimers() {
   myLamp.demoTimer(T_RESET);
   myLamp.effects.autoSaveConfig();
   embui.autosave();
 }
 
 // Функция выводит информацию, с помощью бегущей строки
-void encSendString(String str, CRGB color, bool force, uint8_t delay) {
+void Encoder::SendString(String str, CRGB color, bool force, uint8_t delay) {
   fade = myLamp.getBFade();
   myLamp.setBFade(FADETOBLACKVALUE);
   myLamp.setTextMovingSpeed(delay);
@@ -545,7 +554,7 @@ void encSendString(String str, CRGB color, bool force, uint8_t delay) {
   
 }
 
-void encSendStringNumEff(String str, CRGB color) {
+void Encoder::SendStringNumEff(String str, CRGB color) {
   fade = myLamp.getBFade();
   myLamp.setBFade(FADETOBLACKVALUE);
   myLamp.setTextMovingSpeed(ENC_STRING_EFFNUM_DELAY);
@@ -557,7 +566,7 @@ void encSendStringNumEff(String str, CRGB color) {
 }
 
 
-void toggleDemo() {
+void Encoder::toggleDemo() {
   if (myLamp.getMode() == LAMPMODE::MODE_DEMO) {
     remote_action(RA::RA_DEMO, "0", NULL); 
     encSendString(String(F("Demo OFF")), txtColor, true, txtDelay);
@@ -566,30 +575,30 @@ void toggleDemo() {
     remote_action(RA::RA_DEMO, "1", NULL);
 }
 
-void toggleGBright() {
+void Encoder::toggleGBright() {
   remote_action(RA::RA_GLOBAL_BRIGHT, myLamp.IsGlobalBrightness() ? "0" : "1", NULL);
   encSendString(String(FPSTR(TINTF_00C)) + String(myLamp.IsGlobalBrightness() ? F(": ON") : F(": OFF")), txtColor, true, txtDelay);
 }
 
-void toggleMic() {
+void Encoder::toggleMic() {
 #ifdef MIC_EFFECTS
   remote_action(RA::RA_MICONOFF, myLamp.isMicOnOff() ? "0" : "1", NULL);
   encSendString(String(FPSTR(TINTF_021)) + String(myLamp.isMicOnOff() ? F(": ON") : F(": OFF")), txtColor, true, txtDelay);
 #endif
 }
 
-void toggleAUX() {
+void Encoder::toggleAUX() {
 #ifdef AUX_PIN
   remote_action(RA::RA_AUX_TOGLE, NULL);
   encSendString(String(FPSTR(TCONST_000E)) + String(digitalRead(AUX_PIN) == AUX_LEVEL ? F(": ON") : F(": OFF")), txtColor, true, txtDelay);
 #endif
 }
 
-void sendTime() {
+void Encoder::sendTime() {
   remote_action(RA::RA_SEND_TIME, NULL);
 }
 
-void sendIP() {
+void Encoder::sendIP() {
   remote_action(RA::RA_SEND_IP, NULL);
   #ifdef TM1637_CLOCK
   tm1637.setIpShow();
